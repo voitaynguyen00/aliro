@@ -1,3 +1,4 @@
 add_subdirectory(core)
 add_subdirectory(crypto)
 add_subdirectory(transport)
+add_subdirectory(device)
