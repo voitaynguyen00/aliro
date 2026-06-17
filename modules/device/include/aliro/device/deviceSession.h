@@ -18,10 +18,14 @@ public:
                   const EcPrivateKey& devicePrivKey,
                   AccessDocument      accessDoc);
 
-    /// Process the AUTH0 command and return a response APDU body (without SW).
+    /// Process the SELECT AID command and return SW 9000.
+    Result<Bytes> handleSelect(ByteView commandData);
+
+    /// Process the AUTH0 command and return a response APDU body (with SW 9000).
     Result<Bytes> handleAuth0(ByteView commandData);
 
-    /// Process the AUTH1 command and return a response APDU body (without SW).
+    /// Process the AUTH1 command, verify the reader signature, and return the
+    /// encoded AccessDocument with SW 9000.
     Result<Bytes> handleAuth1(ByteView commandData);
 
     /// Returns the derived session key after AUTH0 completes.
@@ -35,9 +39,11 @@ private:
     // Set during AUTH0 processing
     EcPublicKey mReaderEphemeralPub;
     EcPublicKey mDeviceEphemeralPub;
+    EcPublicKey mReaderLongTermPub;
     Bytes       mReaderNonce;
     Bytes       mDeviceNonce;
     Bytes       mSessionKey;
+    Bytes       mTranscript;
     EcKeyPair   mDeviceEphemeralKp;
 };
 

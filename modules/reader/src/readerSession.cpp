@@ -8,7 +8,6 @@ namespace aliro {
 
 namespace {
 
-// Transcript: readerEphPub(65) || readerNonce(16) || deviceEphPub(65) || deviceNonce(16) = 162 B
 Bytes makeTranscript(ByteView readerEphPub, ByteView readerNonce,
                      ByteView deviceEphPub, ByteView deviceNonce) {
     Bytes t;
@@ -40,8 +39,17 @@ Result<Bytes> deriveSessionKey(ICryptoProvider& crypto,
 ReaderSession::ReaderSession(ICryptoProvider& crypto, ITransport& transport)
     : mCrypto(crypto), mTransport(transport) {}
 
-Result<AuthResult> ReaderSession::authenticate(const EcPrivateKey& readerPrivKey,
-                                                const EcPublicKey&  devicePubKey) {
+Result<AuthResult> ReaderSession::authenticate(const EcKeyPair&   readerKp,
+                                                const EcPublicKey& devicePubKey) {
+    // ---- SELECT AID -------------------------------------------------------
+    ByteView aid(protocol::kAliroAid, sizeof(protocol::kAliroAid));
+    auto selectCmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsSelect,
+                                        0x04, 0x00, aid);
+    auto selectRaw = mTransport.transceive(selectCmd);
+    if (!selectRaw) return tl::unexpected(selectRaw.error());
+    auto selectResp = apdu::parseResponse(*selectRaw);
+    if (!selectResp) return tl::unexpected(selectResp.error());
+
     // ---- AUTH0 --------------------------------------------------------
     auto ephKp = mCrypto.generateKeyPair();
     if (!ephKp) return tl::unexpected(ephKp.error());
@@ -52,11 +60,14 @@ Result<AuthResult> ReaderSession::authenticate(const EcPrivateKey& readerPrivKey
 
     auto ephPubTlv  = tlv::encode(protocol::kTagEphemeralPublicKey, ephKp->pub.data);
     auto nonceTlv   = tlv::encode(protocol::kTagReaderNonce, readerNonce);
-    if (!ephPubTlv || !nonceTlv) return tl::unexpected(AliroError::ENCODING_ERROR);
+    auto readerIdTlv = tlv::encode(protocol::kTagReaderIdentifier, readerKp.pub.data);
+    if (!ephPubTlv || !nonceTlv || !readerIdTlv)
+        return tl::unexpected(AliroError::ENCODING_ERROR);
 
     Bytes auth0Data;
-    auth0Data.insert(auth0Data.end(), ephPubTlv->begin(), ephPubTlv->end());
-    auth0Data.insert(auth0Data.end(), nonceTlv->begin(),  nonceTlv->end());
+    auth0Data.insert(auth0Data.end(), ephPubTlv->begin(),   ephPubTlv->end());
+    auth0Data.insert(auth0Data.end(), nonceTlv->begin(),    nonceTlv->end());
+    auth0Data.insert(auth0Data.end(), readerIdTlv->begin(), readerIdTlv->end());
 
     auto auth0Cmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsAuth0,
                                        0x00, 0x00, auth0Data);
@@ -91,7 +102,7 @@ Result<AuthResult> ReaderSession::authenticate(const EcPrivateKey& readerPrivKey
     if (!sessionKey) return tl::unexpected(sessionKey.error());
 
     // ---- AUTH1 --------------------------------------------------------
-    auto readerSigResult = mCrypto.sign(transcript, readerPrivKey);
+    auto readerSigResult = mCrypto.sign(transcript, readerKp.priv);
     if (!readerSigResult) return tl::unexpected(readerSigResult.error());
 
     auto sigTlv = tlv::encode(protocol::kTagSignature, readerSigResult->data);

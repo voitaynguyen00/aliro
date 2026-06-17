@@ -25,12 +25,11 @@ class ReaderSession {
 public:
     ReaderSession(ICryptoProvider& crypto, ITransport& transport);
 
-    /// Run the full AUTH0 → AUTH1 exchange.
-    /// @param readerPrivKey   Reader's long-term private key for signing.
-    /// @param readerPubKey    Reader's long-term public key (sent to device).
-    /// @param devicePubKey    Expected device long-term public key (for AUTH0 verification).
-    Result<AuthResult> authenticate(const EcPrivateKey& readerPrivKey,
-                                    const EcPublicKey&  devicePubKey);
+    /// Run the SELECT → AUTH0 → AUTH1 exchange.
+    /// @param readerKp      Reader's long-term key pair (pub sent in AUTH0; priv signs AUTH1 transcript).
+    /// @param devicePubKey  Expected device long-term public key (for AUTH0 signature verification).
+    Result<AuthResult> authenticate(const EcKeyPair&   readerKp,
+                                    const EcPublicKey& devicePubKey);
 
 private:
     ICryptoProvider& mCrypto;

@@ -14,6 +14,7 @@ constexpr std::string_view kRevocationDocType = "0.0.1.0.0.0.0.2";
 constexpr uint8_t kAliroCla = 0x00;
 
 // APDU instruction bytes (ISO 7816-4)
+constexpr uint8_t kInsSelect      = 0xA4;
 constexpr uint8_t kInsAuth0       = 0x87;
 constexpr uint8_t kInsAuth1       = 0x86;
 constexpr uint8_t kInsEnvelope    = 0xC3;
