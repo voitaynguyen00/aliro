@@ -1,0 +1,16 @@
+add_executable(aliro-core-tests
+    tlvTest.cpp
+    cborTest.cpp
+    issuerAuthTest.cpp
+    accessDocumentTest.cpp
+    revocationDocumentTest.cpp
+)
+
+target_link_libraries(aliro-core-tests
+    PRIVATE
+        aliro-core
+        GTest::gtest_main
+        GTest::gmock
+)
+
+gtest_discover_tests(aliro-core-tests)

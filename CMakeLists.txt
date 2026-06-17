@@ -6,7 +6,7 @@ project(Aliro
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -15,7 +15,7 @@ include(AliroOptions)
 include(AliroVersion)
 include(FetchContent)
 
-# tl::expected — Result<T,E> for C++17
+# tl::expected — Result<T,E> (std::expected backport)
 FetchContent_Declare(
     tl_expected
     GIT_REPOSITORY https://github.com/TartanLlama/expected.git
