@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Check formatting
         run: |
           find modules tests examples -name '*.cpp' -o -name '*.h' | \
