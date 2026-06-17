@@ -2,6 +2,7 @@ add_library(aliro-crypto STATIC
     src/openSslCryptoProvider.cpp
     src/mbedTlsCryptoProvider.cpp
     src/secureChannel.cpp
+    src/keySerializer.cpp
 )
 
 target_include_directories(aliro-crypto

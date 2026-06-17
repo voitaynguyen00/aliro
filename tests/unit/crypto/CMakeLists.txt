@@ -6,6 +6,7 @@ add_executable(aliro-crypto-tests
     randomTest.cpp
     secureChannelTest.cpp
     mbedTlsTest.cpp
+    keySerializerTest.cpp
 )
 
 target_link_libraries(aliro-crypto-tests
