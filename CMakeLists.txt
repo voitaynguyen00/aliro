@@ -40,6 +40,7 @@ if(ALIRO_BUILD_TESTS)
 endif()
 
 add_subdirectory(modules/core)
+add_subdirectory(modules/crypto)
 
 if(ALIRO_BUILD_TESTS)
     add_subdirectory(tests)
