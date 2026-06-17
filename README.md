@@ -311,19 +311,15 @@ If you're building something similar, or just want to see how this workflow play
 
 ## 💖 Donate
 
-If this library saved you from hand-rolling P-256 ECDH and BER-TLV parsing at 2 AM, consider buying me a coffee ☕
+If this library saved you from hand-rolling P-256 ECDH and BER-TLV parsing at 2 AM, consider sponsoring on GitHub ☕
 
-All donations go directly toward more caffeine, fewer bugs, and the occasional victory snack after a clean `100% tests passed`.
+All sponsorships go directly toward more caffeine, fewer bugs, and the occasional victory snack after a clean `100% tests passed`.
 
 <div align="center">
 
-| Method | Where |
-|:---:|:---:|
-| ☕ Ko-fi | [ko-fi.com/voitaynguyen](https://ko-fi.com/voitaynguyen) |
-| ₿ Bitcoin | `bc1q_YOUR_BTC_ADDRESS` |
-| Ξ Ethereum | `0x_YOUR_ETH_ADDRESS` |
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors)](https://github.com/sponsors/voitaynguyen00)
 
-*"Open source is love. Donations are more love."*
+*"Open source is love. Sponsoring is more love."*
 
 *kekeke 🐸*
 
