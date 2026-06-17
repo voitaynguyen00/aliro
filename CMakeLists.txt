@@ -64,7 +64,7 @@ add_subdirectory(third_party/mbedtls)
 FetchContent_Declare(
     tl_expected
     GIT_REPOSITORY https://github.com/TartanLlama/expected.git
-    GIT_TAG        v1.1.0
+    GIT_TAG        master
     GIT_SHALLOW    TRUE
 )
 set(EXPECTED_BUILD_TESTS OFF CACHE BOOL "" FORCE)
