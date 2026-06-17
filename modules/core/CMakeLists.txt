@@ -1,4 +1,5 @@
 add_library(aliro-core STATIC
+    src/apdu.cpp
     src/tlv.cpp
     src/cbor.cpp
     src/issuerAuth.cpp
@@ -20,4 +21,4 @@ target_compile_options(aliro-core PRIVATE
     -Wall -Wextra -Wpedantic -Werror
 )
 
-target_compile_features(aliro-core PUBLIC cxx_std_17)
+target_compile_features(aliro-core PUBLIC cxx_std_20)

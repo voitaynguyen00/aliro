@@ -42,6 +42,8 @@ endif()
 add_subdirectory(modules/core)
 add_subdirectory(modules/crypto)
 add_subdirectory(modules/transport)
+add_subdirectory(modules/reader)
+add_subdirectory(modules/device)
 
 if(ALIRO_BUILD_TESTS)
     add_subdirectory(tests)

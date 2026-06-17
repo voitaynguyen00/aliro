@@ -5,9 +5,11 @@ namespace aliro::tlv {
 Result<Bytes> encode(uint32_t tag, ByteView value) {
     Bytes result;
 
-    if (tag <= 0x7E) {
+    if (tag <= 0xFF && (tag & 0x1F) != 0x1F) {
+        // Single-byte BER-TLV tag (low 5 bits not all-1).
         result.push_back(static_cast<uint8_t>(tag));
-    } else if (tag <= 0x7FFF) {
+    } else if (tag <= 0xFFFF && ((tag >> 8) & 0x1F) == 0x1F) {
+        // Two-byte BER-TLV tag: first byte has low-5-bits all-1 per ISO 7816-4.
         result.push_back(static_cast<uint8_t>((tag >> 8) & 0xFF));
         result.push_back(static_cast<uint8_t>(tag & 0xFF));
     } else {
