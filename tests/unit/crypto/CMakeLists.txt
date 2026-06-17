@@ -5,6 +5,7 @@ add_executable(aliro-crypto-tests
     hkdfTest.cpp
     randomTest.cpp
     secureChannelTest.cpp
+    mbedTlsTest.cpp
 )
 
 target_link_libraries(aliro-crypto-tests

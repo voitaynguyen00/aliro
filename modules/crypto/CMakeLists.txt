@@ -1,22 +1,6 @@
-if(APPLE AND NOT DEFINED OPENSSL_ROOT_DIR)
-    find_program(BREW brew)
-    if(BREW)
-        execute_process(
-            COMMAND ${BREW} --prefix openssl@3
-            OUTPUT_VARIABLE BREW_OPENSSL_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_QUIET
-        )
-        if(BREW_OPENSSL_DIR AND EXISTS "${BREW_OPENSSL_DIR}")
-            set(OPENSSL_ROOT_DIR "${BREW_OPENSSL_DIR}")
-        endif()
-    endif()
-endif()
-
-find_package(OpenSSL 3.0 REQUIRED)
-
 add_library(aliro-crypto STATIC
     src/openSslCryptoProvider.cpp
+    src/mbedTlsCryptoProvider.cpp
     src/secureChannel.cpp
 )
 
@@ -30,6 +14,7 @@ target_link_libraries(aliro-crypto
     PUBLIC
         aliro-core
         OpenSSL::Crypto
+        mbedcrypto
 )
 
 target_compile_options(aliro-crypto PRIVATE

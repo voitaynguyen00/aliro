@@ -15,6 +15,53 @@ include(AliroOptions)
 include(AliroVersion)
 include(FetchContent)
 
+# OpenSSL — prefer Homebrew on macOS, fall back to FetchContent if not found
+if(APPLE AND NOT DEFINED OPENSSL_ROOT_DIR)
+    find_program(BREW brew)
+    if(BREW)
+        execute_process(
+            COMMAND ${BREW} --prefix openssl@3
+            OUTPUT_VARIABLE BREW_OPENSSL_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+        if(BREW_OPENSSL_DIR AND EXISTS "${BREW_OPENSSL_DIR}")
+            set(OPENSSL_ROOT_DIR "${BREW_OPENSSL_DIR}")
+        endif()
+    endif()
+endif()
+
+find_package(OpenSSL 3.0 QUIET)
+
+if(NOT OPENSSL_FOUND)
+    message(STATUS "System OpenSSL not found — fetching via openssl-cmake")
+    FetchContent_Declare(
+        openssl_cmake
+        GIT_REPOSITORY https://github.com/janbar/openssl-cmake.git
+        GIT_TAG        3.3.1-20241124
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(openssl_cmake)
+    if(NOT TARGET OpenSSL::Crypto)
+        add_library(OpenSSL::Crypto ALIAS crypto)
+    endif()
+    if(NOT TARGET OpenSSL::SSL)
+        add_library(OpenSSL::SSL ALIAS ssl)
+    endif()
+endif()
+
+# MbedTLS — always fetched for embedded compatibility
+set(ENABLE_TESTING         OFF CACHE BOOL "" FORCE)
+set(ENABLE_PROGRAMS        OFF CACHE BOOL "" FORCE)
+set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    mbedtls
+    GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+    GIT_TAG        v3.6.2
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(mbedtls)
+
 # tl::expected — Result<T,E> (std::expected backport)
 FetchContent_Declare(
     tl_expected
