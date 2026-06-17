@@ -14,3 +14,12 @@ CTestTestfile.cmake
 Testing/
 .clangd/
 compile_commands.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cache/
+vcpkg_installed/
