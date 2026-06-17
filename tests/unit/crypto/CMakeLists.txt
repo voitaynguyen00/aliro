@@ -4,6 +4,7 @@ add_executable(aliro-crypto-tests
     aesGcmTest.cpp
     hkdfTest.cpp
     randomTest.cpp
+    secureChannelTest.cpp
 )
 
 target_link_libraries(aliro-crypto-tests

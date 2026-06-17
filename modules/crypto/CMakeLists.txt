@@ -17,6 +17,7 @@ find_package(OpenSSL 3.0 REQUIRED)
 
 add_library(aliro-crypto STATIC
     src/openSslCryptoProvider.cpp
+    src/secureChannel.cpp
 )
 
 target_include_directories(aliro-crypto
