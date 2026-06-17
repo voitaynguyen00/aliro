@@ -1,0 +1,16 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: |
+          find modules tests examples -name '*.cpp' -o -name '*.h' | \
+            xargs clang-format --dry-run --Werror
