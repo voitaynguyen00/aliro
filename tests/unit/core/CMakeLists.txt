@@ -5,6 +5,7 @@ add_executable(aliro-core-tests
     issuerAuthTest.cpp
     accessDocumentTest.cpp
     revocationDocumentTest.cpp
+    logTest.cpp
 )
 
 target_link_libraries(aliro-core-tests

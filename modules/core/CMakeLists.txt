@@ -5,6 +5,7 @@ add_library(aliro-core STATIC
     src/issuerAuth.cpp
     src/accessDocument.cpp
     src/revocationDocument.cpp
+    src/log.cpp
 )
 
 target_include_directories(aliro-core

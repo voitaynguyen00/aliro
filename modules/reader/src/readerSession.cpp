@@ -1,6 +1,7 @@
 #include "aliro/reader/readerSession.h"
 
 #include "aliro/core/apdu.h"
+#include "aliro/core/log.h"
 #include "aliro/core/protocol.h"
 #include "aliro/core/tlv.h"
 
@@ -42,15 +43,25 @@ ReaderSession::ReaderSession(ICryptoProvider& crypto, ITransport& transport)
 Result<AuthResult> ReaderSession::authenticate(const EcKeyPair&   readerKp,
                                                 const EcPublicKey& devicePubKey) {
     // ---- SELECT AID -------------------------------------------------------
+    ALIRO_LOG_DEBUG("authenticate: sending SELECT AID");
     ByteView aid(protocol::kAliroAid, sizeof(protocol::kAliroAid));
     auto selectCmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsSelect,
                                         0x04, 0x00, aid);
     auto selectRaw = mTransport.transceive(selectCmd);
-    if (!selectRaw) return tl::unexpected(selectRaw.error());
+    if (!selectRaw) {
+        ALIRO_LOG_ERROR("authenticate: SELECT transport error");
+        return tl::unexpected(selectRaw.error());
+    }
     auto selectResp = apdu::parseResponse(*selectRaw);
-    if (!selectResp) return tl::unexpected(selectResp.error());
+    if (!selectResp) {
+        ALIRO_LOG_WARN("authenticate: SELECT rejected (SW 0x%04X)",
+                       apdu::statusWord(*selectRaw));
+        return tl::unexpected(selectResp.error());
+    }
+    ALIRO_LOG_DEBUG("authenticate: SELECT OK");
 
     // ---- AUTH0 --------------------------------------------------------
+    ALIRO_LOG_DEBUG("authenticate: sending AUTH0");
     auto ephKp = mCrypto.generateKeyPair();
     if (!ephKp) return tl::unexpected(ephKp.error());
 
@@ -87,21 +98,32 @@ Result<AuthResult> ReaderSession::authenticate(const EcKeyPair&   readerKp,
         else if (item.tag == protocol::kTagSignature)      deviceSig = item.value;
     }
     if (deviceEphPubBytes.size() != protocol::kEcPublicKeySize ||
-        deviceNonce.empty() || deviceSig.size() != protocol::kSignatureSize)
+        deviceNonce.empty() || deviceSig.size() != protocol::kSignatureSize) {
+        ALIRO_LOG_WARN("authenticate: AUTH0 response missing required TLV fields");
         return tl::unexpected(AliroError::INVALID_MESSAGE);
+    }
 
     EcPublicKey deviceEphPub{deviceEphPubBytes};
     Bytes transcript = makeTranscript(ephKp->pub.data, readerNonce,
                                       deviceEphPubBytes, deviceNonce);
 
     auto sigOk = mCrypto.verify(transcript, Signature{deviceSig}, devicePubKey);
-    if (!sigOk || !*sigOk) return tl::unexpected(AliroError::INVALID_MESSAGE);
+    if (!sigOk || !*sigOk) {
+        ALIRO_LOG_WARN("authenticate: AUTH0 device signature verification failed");
+        return tl::unexpected(AliroError::INVALID_MESSAGE);
+    }
 
     auto sessionKey = deriveSessionKey(mCrypto, ephKp->priv, deviceEphPub,
                                        readerNonce, deviceNonce);
-    if (!sessionKey) return tl::unexpected(sessionKey.error());
+    if (!sessionKey) {
+        ALIRO_LOG_ERROR("authenticate: session key derivation failed");
+        return tl::unexpected(sessionKey.error());
+    }
+    ALIRO_LOG_INFO("authenticate: AUTH0 complete, session key derived (%zu bytes)",
+                   sessionKey->size());
 
     // ---- AUTH1 --------------------------------------------------------
+    ALIRO_LOG_DEBUG("authenticate: sending AUTH1");
     auto readerSigResult = mCrypto.sign(transcript, readerKp.priv);
     if (!readerSigResult) return tl::unexpected(readerSigResult.error());
 
@@ -117,8 +139,11 @@ Result<AuthResult> ReaderSession::authenticate(const EcKeyPair&   readerKp,
     if (!auth1Resp) return tl::unexpected(auth1Resp.error());
 
     auto accessDoc = decodeAccessDocument(*auth1Resp);
-    if (!accessDoc) return tl::unexpected(accessDoc.error());
-
+    if (!accessDoc) {
+        ALIRO_LOG_ERROR("authenticate: AUTH1 AccessDocument decode failed");
+        return tl::unexpected(accessDoc.error());
+    }
+    ALIRO_LOG_INFO("authenticate: AUTH1 complete, AccessDocument received");
     return AuthResult{std::move(*accessDoc), std::move(*sessionKey)};
 }
 

@@ -1,6 +1,7 @@
 #include "aliro/device/deviceSession.h"
 
 #include "aliro/core/accessDocument.h"
+#include "aliro/core/log.h"
 #include "aliro/core/protocol.h"
 #include "aliro/core/tlv.h"
 
@@ -56,15 +57,23 @@ DeviceSession::DeviceSession(ICryptoProvider&    crypto,
 {}
 
 Result<Bytes> DeviceSession::handleSelect(ByteView /*commandData*/) {
+    ALIRO_LOG_DEBUG("handleSelect: responding OK");
     return Bytes{0x90, 0x00};
 }
 
 Result<Bytes> DeviceSession::handleAuth0(ByteView commandData) {
+    ALIRO_LOG_DEBUG("handleAuth0: processing AUTH0 command");
     auto dataResult = apduDataField(commandData);
-    if (!dataResult) return tl::unexpected(dataResult.error());
+    if (!dataResult) {
+        ALIRO_LOG_ERROR("handleAuth0: APDU too short");
+        return tl::unexpected(dataResult.error());
+    }
 
     auto items = tlv::decodeAll(*dataResult);
-    if (!items) return tl::unexpected(items.error());
+    if (!items) {
+        ALIRO_LOG_ERROR("handleAuth0: TLV decode failed");
+        return tl::unexpected(items.error());
+    }
 
     Bytes readerEphPubBytes, readerNonce, readerLongTermPubBytes;
     for (auto& item : *items) {
@@ -73,8 +82,10 @@ Result<Bytes> DeviceSession::handleAuth0(ByteView commandData) {
         else if (item.tag == protocol::kTagReaderIdentifier) readerLongTermPubBytes = item.value;
     }
     if (readerEphPubBytes.size() != protocol::kEcPublicKeySize || readerNonce.empty() ||
-        readerLongTermPubBytes.size() != protocol::kEcPublicKeySize)
+        readerLongTermPubBytes.size() != protocol::kEcPublicKeySize) {
+        ALIRO_LOG_WARN("handleAuth0: missing or malformed required TLV fields");
         return tl::unexpected(AliroError::INVALID_MESSAGE);
+    }
 
     mReaderEphemeralPub   = EcPublicKey{readerEphPubBytes};
     mReaderLongTermPub    = EcPublicKey{readerLongTermPubBytes};
@@ -100,6 +111,7 @@ Result<Bytes> DeviceSession::handleAuth0(ByteView commandData) {
                                readerNonce, mDeviceNonce);
     if (!sk) return tl::unexpected(sk.error());
     mSessionKey = std::move(*sk);
+    ALIRO_LOG_INFO("handleAuth0: session key derived (%zu bytes)", mSessionKey.size());
 
     auto ephTlv   = tlv::encode(protocol::kTagEphemeralPublicKey, kp->pub.data);
     auto nonceTlv = tlv::encode(protocol::kTagDeviceNonce, mDeviceNonce);
@@ -126,11 +138,17 @@ Result<Bytes> DeviceSession::handleAuth1(ByteView commandData) {
     for (auto& item : *items) {
         if (item.tag == protocol::kTagSignature) readerSigBytes = item.value;
     }
-    if (readerSigBytes.size() != protocol::kSignatureSize || mTranscript.empty())
+    if (readerSigBytes.size() != protocol::kSignatureSize || mTranscript.empty()) {
+        ALIRO_LOG_WARN("handleAuth1: missing signature or AUTH0 not completed");
         return tl::unexpected(AliroError::INVALID_MESSAGE);
+    }
 
     auto sigOk = mCrypto.verify(mTranscript, Signature{readerSigBytes}, mReaderLongTermPub);
-    if (!sigOk || !*sigOk) return tl::unexpected(AliroError::INVALID_MESSAGE);
+    if (!sigOk || !*sigOk) {
+        ALIRO_LOG_WARN("handleAuth1: reader signature verification failed");
+        return tl::unexpected(AliroError::INVALID_MESSAGE);
+    }
+    ALIRO_LOG_INFO("handleAuth1: reader authenticated, sending AccessDocument");
 
     auto encoded = encodeAccessDocument(mAccessDoc);
     if (!encoded) return tl::unexpected(encoded.error());
