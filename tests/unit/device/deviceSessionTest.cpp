@@ -1,10 +1,11 @@
-#include "aliro/device/deviceSession.h"
-#include "aliro/core/apdu.h"
+#include <gtest/gtest.h>
+
 #include "aliro/core/accessDocument.h"
+#include "aliro/core/apdu.h"
 #include "aliro/core/protocol.h"
 #include "aliro/core/tlv.h"
 #include "aliro/crypto/openSslCryptoProvider.h"
-#include <gtest/gtest.h>
+#include "aliro/device/deviceSession.h"
 
 using namespace aliro;
 
@@ -15,22 +16,21 @@ protected:
     static AccessDocument makeTestAccessDoc() {
         AccessDocument doc;
         doc.docType = std::string(protocol::kAliroDocType);
-        doc.issuerAuth.protectedHeader   = Bytes{0xA0};
+        doc.issuerAuth.protectedHeader = Bytes{0xA0};
         doc.issuerAuth.unprotectedHeader = Bytes{0xA0};
-        doc.issuerAuth.payload           = Bytes(8, 0x42);
-        doc.issuerAuth.signature         = Bytes(64, 0xAB);
+        doc.issuerAuth.payload = Bytes(8, 0x42);
+        doc.issuerAuth.signature = Bytes(64, 0xAB);
         return doc;
     }
 
-    Bytes buildAuth0Command(const EcPublicKey& readerEphPub,
-                            const Bytes& readerNonce,
+    Bytes buildAuth0Command(const EcPublicKey& readerEphPub, const Bytes& readerNonce,
                             const EcPublicKey& readerLongTermPub) {
-        auto ephPubTlv   = tlv::encode(protocol::kTagEphemeralPublicKey, readerEphPub.data);
-        auto nonceTlv    = tlv::encode(protocol::kTagReaderNonce, readerNonce);
+        auto ephPubTlv = tlv::encode(protocol::kTagEphemeralPublicKey, readerEphPub.data);
+        auto nonceTlv = tlv::encode(protocol::kTagReaderNonce, readerNonce);
         auto readerIdTlv = tlv::encode(protocol::kTagReaderIdentifier, readerLongTermPub.data);
         Bytes data;
-        data.insert(data.end(), ephPubTlv->begin(),   ephPubTlv->end());
-        data.insert(data.end(), nonceTlv->begin(),    nonceTlv->end());
+        data.insert(data.end(), ephPubTlv->begin(), ephPubTlv->end());
+        data.insert(data.end(), nonceTlv->begin(), nonceTlv->end());
         data.insert(data.end(), readerIdTlv->begin(), readerIdTlv->end());
         return apdu::buildCommand(protocol::kAliroCla, protocol::kInsAuth0, 0x00, 0x00, data);
     }
@@ -72,11 +72,11 @@ TEST_F(DeviceSessionTest, handleAuth0_missingEphemeralKey_returnsInvalidMessage)
     ASSERT_TRUE(nonce.has_value());
 
     // Omit kTagEphemeralPublicKey — only nonce + reader identifier
-    auto nonceTlv    = tlv::encode(protocol::kTagReaderNonce, *nonce);
+    auto nonceTlv = tlv::encode(protocol::kTagReaderNonce, *nonce);
     auto readerIdTlv = tlv::encode(protocol::kTagReaderIdentifier, readerKp->pub.data);
     ASSERT_TRUE(nonceTlv.has_value() && readerIdTlv.has_value());
     Bytes data;
-    data.insert(data.end(), nonceTlv->begin(),    nonceTlv->end());
+    data.insert(data.end(), nonceTlv->begin(), nonceTlv->end());
     data.insert(data.end(), readerIdTlv->begin(), readerIdTlv->end());
     auto cmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsAuth0, 0x00, 0x00, data);
 
@@ -92,11 +92,11 @@ TEST_F(DeviceSessionTest, handleAuth0_missingNonce_returnsInvalidMessage) {
     DeviceSession session(mCrypto, deviceKp->priv, makeTestAccessDoc());
 
     // Omit kTagReaderNonce — only ephemeral pub + reader identifier
-    auto ephPubTlv   = tlv::encode(protocol::kTagEphemeralPublicKey, readerKp->pub.data);
+    auto ephPubTlv = tlv::encode(protocol::kTagEphemeralPublicKey, readerKp->pub.data);
     auto readerIdTlv = tlv::encode(protocol::kTagReaderIdentifier, readerKp->pub.data);
     ASSERT_TRUE(ephPubTlv.has_value() && readerIdTlv.has_value());
     Bytes data;
-    data.insert(data.end(), ephPubTlv->begin(),   ephPubTlv->end());
+    data.insert(data.end(), ephPubTlv->begin(), ephPubTlv->end());
     data.insert(data.end(), readerIdTlv->begin(), readerIdTlv->end());
     auto cmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsAuth0, 0x00, 0x00, data);
 
@@ -116,11 +116,11 @@ TEST_F(DeviceSessionTest, handleAuth0_missingReaderIdentifier_returnsInvalidMess
 
     // Omit kTagReaderIdentifier — only ephemeral pub + nonce
     auto ephPubTlv = tlv::encode(protocol::kTagEphemeralPublicKey, readerKp->pub.data);
-    auto nonceTlv  = tlv::encode(protocol::kTagReaderNonce, *nonce);
+    auto nonceTlv = tlv::encode(protocol::kTagReaderNonce, *nonce);
     ASSERT_TRUE(ephPubTlv.has_value() && nonceTlv.has_value());
     Bytes data;
     data.insert(data.end(), ephPubTlv->begin(), ephPubTlv->end());
-    data.insert(data.end(), nonceTlv->begin(),  nonceTlv->end());
+    data.insert(data.end(), nonceTlv->begin(), nonceTlv->end());
     auto cmd = apdu::buildCommand(protocol::kAliroCla, protocol::kInsAuth0, 0x00, 0x00, data);
 
     auto result = session.handleAuth0(cmd);
@@ -129,8 +129,8 @@ TEST_F(DeviceSessionTest, handleAuth0_missingReaderIdentifier_returnsInvalidMess
 }
 
 TEST_F(DeviceSessionTest, handleAuth0_validCommand_responseHasRequiredTlvFields) {
-    auto deviceKp    = mCrypto.generateKeyPair();
-    auto readerKp    = mCrypto.generateKeyPair();
+    auto deviceKp = mCrypto.generateKeyPair();
+    auto readerKp = mCrypto.generateKeyPair();
     auto readerEphKp = mCrypto.generateKeyPair();
     ASSERT_TRUE(deviceKp.has_value() && readerKp.has_value() && readerEphKp.has_value());
     DeviceSession session(mCrypto, deviceKp->priv, makeTestAccessDoc());
@@ -138,7 +138,7 @@ TEST_F(DeviceSessionTest, handleAuth0_validCommand_responseHasRequiredTlvFields)
     auto nonce = mCrypto.randomBytes(16);
     ASSERT_TRUE(nonce.has_value());
 
-    auto cmd    = buildAuth0Command(readerEphKp->pub, *nonce, readerKp->pub);
+    auto cmd = buildAuth0Command(readerEphKp->pub, *nonce, readerKp->pub);
     auto result = session.handleAuth0(cmd);
     ASSERT_TRUE(result.has_value());
 
@@ -154,7 +154,8 @@ TEST_F(DeviceSessionTest, handleAuth0_validCommand_responseHasRequiredTlvFields)
 
     bool hasEphPub = false, hasNonce = false, hasSig = false;
     for (auto& item : *items) {
-        if (item.tag == protocol::kTagEphemeralPublicKey && item.value.size() == protocol::kEcPublicKeySize)
+        if (item.tag == protocol::kTagEphemeralPublicKey &&
+            item.value.size() == protocol::kEcPublicKeySize)
             hasEphPub = true;
         if (item.tag == protocol::kTagDeviceNonce && !item.value.empty())
             hasNonce = true;
@@ -172,15 +173,15 @@ TEST_F(DeviceSessionTest, handleAuth1_withoutPriorAuth0_returnsInvalidMessage) {
     DeviceSession session(mCrypto, deviceKp->priv, makeTestAccessDoc());
 
     // mTranscript is empty — handleAuth1 must reject immediately
-    auto cmd    = buildAuth1Command(Bytes(64, 0x42));
+    auto cmd = buildAuth1Command(Bytes(64, 0x42));
     auto result = session.handleAuth1(cmd);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), AliroError::INVALID_MESSAGE);
 }
 
 TEST_F(DeviceSessionTest, handleAuth1_wrongSig_returnsInvalidMessage) {
-    auto deviceKp    = mCrypto.generateKeyPair();
-    auto readerKp    = mCrypto.generateKeyPair();
+    auto deviceKp = mCrypto.generateKeyPair();
+    auto readerKp = mCrypto.generateKeyPair();
     auto readerEphKp = mCrypto.generateKeyPair();
     ASSERT_TRUE(deviceKp.has_value() && readerKp.has_value() && readerEphKp.has_value());
     DeviceSession session(mCrypto, deviceKp->priv, makeTestAccessDoc());
@@ -189,12 +190,12 @@ TEST_F(DeviceSessionTest, handleAuth1_wrongSig_returnsInvalidMessage) {
     ASSERT_TRUE(nonce.has_value());
 
     // Successful AUTH0 — sets mTranscript and mReaderLongTermPub
-    auto auth0Cmd    = buildAuth0Command(readerEphKp->pub, *nonce, readerKp->pub);
+    auto auth0Cmd = buildAuth0Command(readerEphKp->pub, *nonce, readerKp->pub);
     auto auth0Result = session.handleAuth0(auth0Cmd);
     ASSERT_TRUE(auth0Result.has_value());
 
     // AUTH1 with a wrong (all-0x42) signature — verify() must return false
-    auto auth1Cmd    = buildAuth1Command(Bytes(64, 0x42));
+    auto auth1Cmd = buildAuth1Command(Bytes(64, 0x42));
     auto auth1Result = session.handleAuth1(auth1Cmd);
     ASSERT_FALSE(auth1Result.has_value());
     EXPECT_EQ(auth1Result.error(), AliroError::INVALID_MESSAGE);

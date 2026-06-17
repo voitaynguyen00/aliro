@@ -2,8 +2,8 @@
 
 namespace aliro::apdu {
 
-Bytes buildCommand(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
-                   ByteView data, bool expectResponse) {
+Bytes buildCommand(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, ByteView data,
+                   bool expectResponse) {
     Bytes cmd;
     cmd.reserve(5 + data.size() + (expectResponse ? 1 : 0));
     cmd.push_back(cla);
@@ -23,20 +23,20 @@ Bytes buildCommand(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
     }
     if (expectResponse) {
         if (data.size() > 0xFF) {
-            cmd.push_back(0x00); // extended Le
+            cmd.push_back(0x00);  // extended Le
             cmd.push_back(0x00);
         } else {
-            cmd.push_back(0x00); // Le: max response
+            cmd.push_back(0x00);  // Le: max response
         }
     }
     return cmd;
 }
 
 uint16_t statusWord(ByteView response) {
-    if (response.size() < 2) return 0;
-    return static_cast<uint16_t>(
-        (static_cast<uint16_t>(response[response.size() - 2]) << 8) |
-         response[response.size() - 1]);
+    if (response.size() < 2)
+        return 0;
+    return static_cast<uint16_t>((static_cast<uint16_t>(response[response.size() - 2]) << 8) |
+                                 response[response.size() - 1]);
 }
 
 Result<Bytes> parseResponse(ByteView response) {
@@ -48,4 +48,4 @@ Result<Bytes> parseResponse(ByteView response) {
     return Bytes(response.begin(), response.end() - 2);
 }
 
-} // namespace aliro::apdu
+}  // namespace aliro::apdu

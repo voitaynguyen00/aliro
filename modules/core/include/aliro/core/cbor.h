@@ -1,18 +1,19 @@
 #pragma once
 
-#include "aliro/core/types.h"
 #include <string_view>
+
+#include "aliro/core/types.h"
 
 namespace aliro::cbor {
 
 enum class MajorType : uint8_t {
-    UINT   = 0,
-    INT    = 1,
-    BYTES  = 2,
-    TEXT   = 3,
-    ARRAY  = 4,
-    MAP    = 5,
-    TAG    = 6,
+    UINT = 0,
+    INT = 1,
+    BYTES = 2,
+    TEXT = 3,
+    ARRAY = 4,
+    MAP = 5,
+    TAG = 6,
     SIMPLE = 7,
 };
 
@@ -44,24 +45,24 @@ public:
     bool isAtEnd() const;
     Result<MajorType> peekMajorType() const;
 
-    Result<uint64_t>    getUint();
-    Result<int64_t>     getInt();
-    Result<Bytes>       getBytes();
+    Result<uint64_t> getUint();
+    Result<int64_t> getInt();
+    Result<Bytes> getBytes();
     Result<std::string> getText();
-    Result<bool>        getBool();
-    Result<void>        getNull();
-    Result<uint64_t>    getTag();
-    Result<size_t>      getArraySize();
-    Result<size_t>      getMapSize();
-    Result<void>        skip();
+    Result<bool> getBool();
+    Result<void> getNull();
+    Result<uint64_t> getTag();
+    Result<size_t> getArraySize();
+    Result<size_t> getMapSize();
+    Result<void> skip();
 
     size_t bytesConsumed() const;
 
 private:
     ByteView mData;
-    size_t   mPos{0};
+    size_t mPos{0};
 
     Result<uint64_t> decodeHead(uint8_t& outMajorType);
 };
 
-} // namespace aliro::cbor
+}  // namespace aliro::cbor

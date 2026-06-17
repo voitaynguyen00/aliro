@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <span>
 #include <string>
-#include <vector>
 #include <tl/expected.hpp>
+#include <vector>
 
 namespace aliro {
 
-using Bytes    = std::vector<uint8_t>;
+using Bytes = std::vector<uint8_t>;
 using ByteView = std::span<const uint8_t>;
 
 enum class AliroError {
@@ -25,7 +25,7 @@ enum class AliroError {
     NOT_FOUND,
 };
 
-template<typename T>
+template <typename T>
 using Result = tl::expected<T, AliroError>;
 
-} // namespace aliro
+}  // namespace aliro

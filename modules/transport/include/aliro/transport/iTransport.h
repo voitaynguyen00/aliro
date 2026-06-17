@@ -20,4 +20,4 @@ public:
     virtual void close() = 0;
 };
 
-} // namespace aliro
+}  // namespace aliro

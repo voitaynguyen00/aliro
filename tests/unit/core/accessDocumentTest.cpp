@@ -1,16 +1,17 @@
+#include <gtest/gtest.h>
+
 #include "aliro/core/accessDocument.h"
 #include "aliro/core/protocol.h"
-#include <gtest/gtest.h>
 
 using namespace aliro;
 
 TEST(AccessDocumentTest, encodeDecodeRoundTrip_minimal) {
     AccessDocument doc;
     doc.docType = std::string(protocol::kAliroDocType);
-    doc.issuerAuth.protectedHeader   = Bytes{0xA0};
+    doc.issuerAuth.protectedHeader = Bytes{0xA0};
     doc.issuerAuth.unprotectedHeader = Bytes{0xA0};
-    doc.issuerAuth.payload           = Bytes(16, 0x00);
-    doc.issuerAuth.signature         = Bytes(64, 0xAB);
+    doc.issuerAuth.payload = Bytes(16, 0x00);
+    doc.issuerAuth.signature = Bytes(64, 0xAB);
 
     auto encoded = encodeAccessDocument(doc);
     ASSERT_TRUE(encoded.has_value()) << "encode failed";
@@ -26,14 +27,14 @@ TEST(AccessDocumentTest, encodeDecodeRoundTrip_minimal) {
 TEST(AccessDocumentTest, encodeDecodeRoundTrip_withNamespace) {
     AccessDocument doc;
     doc.docType = std::string(protocol::kAliroDocType);
-    doc.issuerAuth.protectedHeader   = Bytes{0xA0};
+    doc.issuerAuth.protectedHeader = Bytes{0xA0};
     doc.issuerAuth.unprotectedHeader = Bytes{0xA0};
-    doc.issuerAuth.payload           = Bytes(16, 0x11);
-    doc.issuerAuth.signature         = Bytes(64, 0xFF);
+    doc.issuerAuth.payload = Bytes(16, 0x11);
+    doc.issuerAuth.signature = Bytes(64, 0xFF);
 
     NameSpaceItems ns;
     ns.nameSpace = std::string(protocol::kAliroNameSpace);
-    ns.issuerSignedItems.push_back(Bytes{0x42, 0xAA, 0xBB}); // dummy item bytes
+    ns.issuerSignedItems.push_back(Bytes{0x42, 0xAA, 0xBB});  // dummy item bytes
     doc.nameSpaces.push_back(std::move(ns));
 
     auto encoded = encodeAccessDocument(doc);

@@ -1,15 +1,16 @@
-#include "aliro/core/issuerAuth.h"
-#include "aliro/core/cbor.h"
 #include <gtest/gtest.h>
+
+#include "aliro/core/cbor.h"
+#include "aliro/core/issuerAuth.h"
 
 using namespace aliro;
 
 TEST(IssuerSignedItemTest, encodeDecodeRoundTrip) {
     IssuerSignedItem item;
     item.digestId = 1;
-    item.random   = Bytes(16, 0xAA);
+    item.random = Bytes(16, 0xAA);
     item.elementIdentifier = "some.element";
-    item.elementValue      = Bytes{0x41, 0x01}; // CBOR-encoded uint 1
+    item.elementValue = Bytes{0x41, 0x01};  // CBOR-encoded uint 1
 
     auto encoded = encodeIssuerSignedItem(item);
     ASSERT_TRUE(encoded.has_value());
@@ -24,20 +25,20 @@ TEST(IssuerSignedItemTest, encodeDecodeRoundTrip) {
 
 TEST(IssuerAuthTest, encodeDecodeRoundTrip) {
     IssuerAuth auth;
-    auth.protectedHeader   = Bytes{0xA1, 0x01, 0x26}; // CBOR {"alg": -7}
-    auth.unprotectedHeader = Bytes{0xA0};              // CBOR {}
-    auth.payload           = Bytes(32, 0xBB);
-    auth.signature         = Bytes(64, 0xCC);
+    auth.protectedHeader = Bytes{0xA1, 0x01, 0x26};  // CBOR {"alg": -7}
+    auth.unprotectedHeader = Bytes{0xA0};            // CBOR {}
+    auth.payload = Bytes(32, 0xBB);
+    auth.signature = Bytes(64, 0xCC);
 
     auto encoded = encodeIssuerAuth(auth);
     ASSERT_TRUE(encoded.has_value());
 
     auto decoded = decodeIssuerAuth(*encoded);
     ASSERT_TRUE(decoded.has_value());
-    EXPECT_EQ(decoded->protectedHeader,   auth.protectedHeader);
+    EXPECT_EQ(decoded->protectedHeader, auth.protectedHeader);
     EXPECT_EQ(decoded->unprotectedHeader, auth.unprotectedHeader);
-    EXPECT_EQ(decoded->payload,           auth.payload);
-    EXPECT_EQ(decoded->signature,         auth.signature);
+    EXPECT_EQ(decoded->payload, auth.payload);
+    EXPECT_EQ(decoded->signature, auth.signature);
 }
 
 TEST(IssuerAuthTest, decodeMalformedData_returnsError) {
@@ -50,7 +51,7 @@ TEST(IssuerAuthTest, decodeMalformedData_returnsError) {
 TEST(IssuerAuthTest, signatureWrongSize_returnsError) {
     cbor::Encoder enc;
     enc.beginArray(4);
-    enc.addBytes(Bytes{0xA1, 0x01, 0x26}); // protected
+    enc.addBytes(Bytes{0xA1, 0x01, 0x26});  // protected
     enc.addBytes(Bytes{0xA0});              // unprotected
     enc.addBytes(Bytes(32, 0xBB));          // payload
     enc.addBytes(Bytes(32, 0xCC));          // signature — wrong: must be 64 bytes

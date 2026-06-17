@@ -1,5 +1,6 @@
-#include "aliro/crypto/openSslCryptoProvider.h"
 #include <gtest/gtest.h>
+
+#include "aliro/crypto/openSslCryptoProvider.h"
 
 using namespace aliro;
 

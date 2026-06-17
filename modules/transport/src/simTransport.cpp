@@ -10,8 +10,12 @@ Result<Bytes> SimTransport::transceive(ByteView command) {
     return mHandler(command);
 }
 
-bool SimTransport::isOpen() const { return mIsOpen; }
+bool SimTransport::isOpen() const {
+    return mIsOpen;
+}
 
-void SimTransport::close() { mIsOpen = false; }
+void SimTransport::close() {
+    mIsOpen = false;
+}
 
-} // namespace aliro
+}  // namespace aliro

@@ -14,9 +14,8 @@ namespace aliro {
 ///   auto auth1Response = session.handleAuth1(auth1Command);
 class DeviceSession {
 public:
-    DeviceSession(ICryptoProvider&    crypto,
-                  const EcPrivateKey& devicePrivKey,
-                  AccessDocument      accessDoc);
+    DeviceSession(ICryptoProvider& crypto, const EcPrivateKey& devicePrivKey,
+                  AccessDocument accessDoc);
 
     /// Process the SELECT AID command and return SW 9000.
     Result<Bytes> handleSelect(ByteView commandData);
@@ -32,19 +31,19 @@ public:
     const Bytes& sessionKey() const { return mSessionKey; }
 
 private:
-    ICryptoProvider&    mCrypto;
+    ICryptoProvider& mCrypto;
     const EcPrivateKey& mDevicePrivKey;
-    AccessDocument      mAccessDoc;
+    AccessDocument mAccessDoc;
 
     // Set during AUTH0 processing
     EcPublicKey mReaderEphemeralPub;
     EcPublicKey mDeviceEphemeralPub;
     EcPublicKey mReaderLongTermPub;
-    Bytes       mReaderNonce;
-    Bytes       mDeviceNonce;
-    Bytes       mSessionKey;
-    Bytes       mTranscript;
-    EcKeyPair   mDeviceEphemeralKp;
+    Bytes mReaderNonce;
+    Bytes mDeviceNonce;
+    Bytes mSessionKey;
+    Bytes mTranscript;
+    EcKeyPair mDeviceEphemeralKp;
 };
 
-} // namespace aliro
+}  // namespace aliro

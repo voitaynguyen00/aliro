@@ -1,14 +1,15 @@
 #pragma once
 
-#include "aliro/core/types.h"
 #include <cstdint>
 #include <vector>
+
+#include "aliro/core/types.h"
 
 namespace aliro::tlv {
 
 struct TlvItem {
     uint32_t tag;
-    Bytes    value;
+    Bytes value;
 };
 
 /// Encode a single DER-TLV item.
@@ -21,4 +22,4 @@ Result<TlvItem> decodeOne(ByteView data, size_t& bytesConsumed);
 /// Decode all consecutive DER-TLV items from data.
 Result<std::vector<TlvItem>> decodeAll(ByteView data);
 
-} // namespace aliro::tlv
+}  // namespace aliro::tlv

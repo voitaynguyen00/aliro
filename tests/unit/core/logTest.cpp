@@ -1,6 +1,8 @@
-#include "aliro/core/log.h"
 #include <gtest/gtest.h>
+
 #include <string>
+
+#include "aliro/core/log.h"
 
 using namespace aliro;
 
@@ -12,11 +14,13 @@ struct LogCapture {
 
     LogCapture() {
         instance = this;
-        log::setCallback([](log::Level lv, const char*, int, const char* msg) {
-            instance->lastLevel   = lv;
-            instance->lastMessage = msg;
-            ++instance->callCount;
-        }, log::Level::DEBUG);
+        log::setCallback(
+            [](log::Level lv, const char*, int, const char* msg) {
+                instance->lastLevel = lv;
+                instance->lastMessage = msg;
+                ++instance->callCount;
+            },
+            log::Level::DEBUG);
     }
     ~LogCapture() {
         log::setCallback(nullptr);
@@ -45,15 +49,17 @@ TEST(LogTest, callback_receivesCorrectLevelAndMessage) {
 
 TEST(LogTest, minLevel_filtersLowerSeverity) {
     LogCapture cap;
-    log::setCallback(LogCapture::instance->lastLevel == log::Level::NONE
-                         ? nullptr : nullptr,  // reset first
-                     log::Level::WARN);
+    log::setCallback(
+        LogCapture::instance->lastLevel == log::Level::NONE ? nullptr : nullptr,  // reset first
+        log::Level::WARN);
     // Re-install at WARN level
-    log::setCallback([](log::Level lv, const char*, int, const char* msg) {
-        LogCapture::instance->lastLevel   = lv;
-        LogCapture::instance->lastMessage = msg;
-        ++LogCapture::instance->callCount;
-    }, log::Level::WARN);
+    log::setCallback(
+        [](log::Level lv, const char*, int, const char* msg) {
+            LogCapture::instance->lastLevel = lv;
+            LogCapture::instance->lastMessage = msg;
+            ++LogCapture::instance->callCount;
+        },
+        log::Level::WARN);
 
     cap.callCount = 0;
     ALIRO_LOG_DEBUG("should be filtered");
@@ -63,11 +69,13 @@ TEST(LogTest, minLevel_filtersLowerSeverity) {
 
 TEST(LogTest, minLevel_passesEqualOrHigherSeverity) {
     LogCapture cap;
-    log::setCallback([](log::Level lv, const char*, int, const char* msg) {
-        LogCapture::instance->lastLevel   = lv;
-        LogCapture::instance->lastMessage = msg;
-        ++LogCapture::instance->callCount;
-    }, log::Level::WARN);
+    log::setCallback(
+        [](log::Level lv, const char*, int, const char* msg) {
+            LogCapture::instance->lastLevel = lv;
+            LogCapture::instance->lastMessage = msg;
+            ++LogCapture::instance->callCount;
+        },
+        log::Level::WARN);
 
     ALIRO_LOG_WARN("warning fires");
     ALIRO_LOG_ERROR("error fires");

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "aliro/transport/iTransport.h"
 #include <functional>
+
+#include "aliro/transport/iTransport.h"
 
 namespace aliro {
 
@@ -14,12 +15,12 @@ public:
     explicit SimTransport(Handler handler);
 
     Result<Bytes> transceive(ByteView command) override;
-    bool          isOpen() const override;
-    void          close() override;
+    bool isOpen() const override;
+    void close() override;
 
 private:
     Handler mHandler;
-    bool    mIsOpen{true};
+    bool mIsOpen{true};
 };
 
-} // namespace aliro
+}  // namespace aliro

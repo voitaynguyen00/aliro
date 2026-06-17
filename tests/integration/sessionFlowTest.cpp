@@ -1,10 +1,12 @@
-#include "aliro/device/deviceSession.h"
-#include "aliro/reader/readerSession.h"
+#include <gtest/gtest.h>
+
+#include <memory>
+
 #include "aliro/core/protocol.h"
 #include "aliro/crypto/openSslCryptoProvider.h"
+#include "aliro/device/deviceSession.h"
+#include "aliro/reader/readerSession.h"
 #include "aliro/transport/simTransport.h"
-#include <gtest/gtest.h>
-#include <memory>
 
 using namespace aliro;
 
@@ -15,21 +17,25 @@ protected:
     static AccessDocument makeTestAccessDoc() {
         AccessDocument doc;
         doc.docType = std::string(protocol::kAliroDocType);
-        doc.issuerAuth.protectedHeader   = Bytes{0xA0};
+        doc.issuerAuth.protectedHeader = Bytes{0xA0};
         doc.issuerAuth.unprotectedHeader = Bytes{0xA0};
-        doc.issuerAuth.payload           = Bytes(8, 0x42);
-        doc.issuerAuth.signature         = Bytes(64, 0xAB);
+        doc.issuerAuth.payload = Bytes(8, 0x42);
+        doc.issuerAuth.signature = Bytes(64, 0xAB);
         return doc;
     }
 
     // Build a SimTransport that routes APDU INS bytes to the given DeviceSession.
     static SimTransport makeTransport(std::shared_ptr<DeviceSession> dev) {
         return SimTransport([dev](ByteView cmd) -> Result<Bytes> {
-            if (cmd.size() < 2) return tl::unexpected(AliroError::INVALID_MESSAGE);
+            if (cmd.size() < 2)
+                return tl::unexpected(AliroError::INVALID_MESSAGE);
             uint8_t ins = cmd[1];
-            if (ins == protocol::kInsSelect) return dev->handleSelect(cmd);
-            if (ins == protocol::kInsAuth0)  return dev->handleAuth0(cmd);
-            if (ins == protocol::kInsAuth1)  return dev->handleAuth1(cmd);
+            if (ins == protocol::kInsSelect)
+                return dev->handleSelect(cmd);
+            if (ins == protocol::kInsAuth0)
+                return dev->handleAuth0(cmd);
+            if (ins == protocol::kInsAuth1)
+                return dev->handleAuth1(cmd);
             return tl::unexpected(AliroError::INVALID_MESSAGE);
         });
     }
@@ -56,7 +62,7 @@ TEST_F(SessionFlowTest, fullAuth0Auth1ExchangeSucceeds) {
 TEST_F(SessionFlowTest, wrongDeviceKey_auth0VerificationFails) {
     auto readerKp = mCrypto.generateKeyPair();
     auto deviceKp = mCrypto.generateKeyPair();
-    auto wrongKp  = mCrypto.generateKeyPair();
+    auto wrongKp = mCrypto.generateKeyPair();
     ASSERT_TRUE(readerKp.has_value() && deviceKp.has_value() && wrongKp.has_value());
 
     auto dev = std::make_shared<DeviceSession>(mCrypto, deviceKp->priv, makeTestAccessDoc());
@@ -71,7 +77,7 @@ TEST_F(SessionFlowTest, wrongDeviceKey_auth0VerificationFails) {
 TEST_F(SessionFlowTest, wrongReaderKey_auth1VerificationFails) {
     auto readerKp = mCrypto.generateKeyPair();
     auto deviceKp = mCrypto.generateKeyPair();
-    auto wrongKp  = mCrypto.generateKeyPair();
+    auto wrongKp = mCrypto.generateKeyPair();
     ASSERT_TRUE(readerKp.has_value() && deviceKp.has_value() && wrongKp.has_value());
 
     // Build a mismatched key pair: advertise readerKp->pub in AUTH0 so the device

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "aliro/crypto/iCryptoProvider.h"
 #include "aliro/core/types.h"
+#include "aliro/crypto/iCryptoProvider.h"
 
 namespace aliro {
 
@@ -25,11 +25,11 @@ public:
 
 private:
     ICryptoProvider& mCrypto;
-    SessionKey       mKey;
-    uint32_t         mSendCounter{0};
-    uint32_t         mRecvCounter{0};
+    SessionKey mKey;
+    uint32_t mSendCounter{0};
+    uint32_t mRecvCounter{0};
 
     static Bytes makeNonce(uint32_t counter);
 };
 
-} // namespace aliro
+}  // namespace aliro

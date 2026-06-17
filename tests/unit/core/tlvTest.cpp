@@ -1,5 +1,6 @@
-#include "aliro/core/tlv.h"
 #include <gtest/gtest.h>
+
+#include "aliro/core/tlv.h"
 
 using namespace aliro;
 
@@ -35,7 +36,7 @@ TEST(TlvEncodeTest, lengthRequires3Bytes) {
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ((*result)[1], 0x82);
     EXPECT_EQ((*result)[2], 0x01);
-    EXPECT_EQ((*result)[3], 0x2C); // 300 = 0x012C
+    EXPECT_EQ((*result)[3], 0x2C);  // 300 = 0x012C
     EXPECT_EQ(result->size(), 4u + 300u);
 }
 
@@ -68,7 +69,7 @@ TEST(TlvDecodeTest, emptyData_returnsError) {
 }
 
 TEST(TlvDecodeTest, truncatedValue_returnsError) {
-    Bytes data = {0x41, 0x05, 0x01, 0x02}; // length=5 but only 2 value bytes
+    Bytes data = {0x41, 0x05, 0x01, 0x02};  // length=5 but only 2 value bytes
     size_t consumed = 0;
     auto result = tlv::decodeOne(data, consumed);
     EXPECT_FALSE(result.has_value());
@@ -90,14 +91,14 @@ TEST(TlvRoundTripTest, encodeDecodeRoundTrip) {
 // Regression: tags 0x80–0xFF with (& 0x1F != 0x1F) must be single-byte.
 TEST(TlvRoundTripTest, aliroProtocolTags_roundTrip) {
     const uint32_t tags[] = {
-        0x86, // kTagEphemeralPublicKey
-        0x85, // kTagReaderNonce
-        0x8A, // kTagDeviceNonce
-        0x9E, // kTagSignature
-        0x9D, // kTagCryptogram
-        0x83, // kTagReaderIdentifier
-        0xA7, // kTagDeviceRequest
-        0xA8, // kTagDeviceResponse
+        0x86,  // kTagEphemeralPublicKey
+        0x85,  // kTagReaderNonce
+        0x8A,  // kTagDeviceNonce
+        0x9E,  // kTagSignature
+        0x9D,  // kTagCryptogram
+        0x83,  // kTagReaderIdentifier
+        0xA7,  // kTagDeviceRequest
+        0xA8,  // kTagDeviceResponse
     };
     for (uint32_t tag : tags) {
         Bytes value = {0xDE, 0xAD};

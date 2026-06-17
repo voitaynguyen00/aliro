@@ -1,5 +1,6 @@
-#include "aliro/core/apdu.h"
 #include <gtest/gtest.h>
+
+#include "aliro/core/apdu.h"
 
 using namespace aliro;
 
@@ -33,9 +34,9 @@ TEST(ApduBuildTest, shortData_noLe) {
 TEST(ApduBuildTest, aliroAid_selectCommand) {
     Bytes aid = {0xA0, 0x00, 0x00, 0x09, 0x63, 0x4C, 0x69, 0x72, 0x6F};
     auto cmd = apdu::buildCommand(0x00, 0xA4, 0x04, 0x00, aid);
-    EXPECT_EQ(cmd.size(), 4u + 1u + 9u + 1u); // header + Lc + AID + Le
-    EXPECT_EQ(cmd[4], 0x09u);                   // Lc = 9
-    EXPECT_EQ(cmd.back(), 0x00u);               // Le
+    EXPECT_EQ(cmd.size(), 4u + 1u + 9u + 1u);  // header + Lc + AID + Le
+    EXPECT_EQ(cmd[4], 0x09u);                  // Lc = 9
+    EXPECT_EQ(cmd.back(), 0x00u);              // Le
 }
 
 TEST(ApduParseTest, successResponse_returnData) {
@@ -53,7 +54,7 @@ TEST(ApduParseTest, statusWordOnly_returnsEmpty) {
 }
 
 TEST(ApduParseTest, nonSuccessSW_returnsError) {
-    Bytes resp = {0x6A, 0x82}; // File not found
+    Bytes resp = {0x6A, 0x82};  // File not found
     auto data = apdu::parseResponse(resp);
     ASSERT_FALSE(data.has_value());
     EXPECT_EQ(data.error(), AliroError::INVALID_MESSAGE);

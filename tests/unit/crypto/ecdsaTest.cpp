@@ -1,6 +1,7 @@
-#include "aliro/crypto/openSslCryptoProvider.h"
-#include "aliro/core/protocol.h"
 #include <gtest/gtest.h>
+
+#include "aliro/core/protocol.h"
+#include "aliro/crypto/openSslCryptoProvider.h"
 
 using namespace aliro;
 
@@ -53,7 +54,7 @@ TEST_F(CryptoTest, verify_validSignatureReturnsTrue) {
 TEST_F(CryptoTest, verify_wrongMessageReturnsFalse) {
     auto kp = mCrypto.generateKeyPair();
     ASSERT_TRUE(kp.has_value());
-    Bytes msg   = {0xDE, 0xAD, 0xBE, 0xEF};
+    Bytes msg = {0xDE, 0xAD, 0xBE, 0xEF};
     Bytes other = {0xCA, 0xFE, 0xBA, 0xBE};
     auto sig = mCrypto.sign(msg, kp->priv);
     ASSERT_TRUE(sig.has_value());

@@ -1,5 +1,6 @@
-#include "aliro/core/cbor.h"
 #include <gtest/gtest.h>
+
+#include "aliro/core/cbor.h"
 
 using namespace aliro;
 using namespace aliro::cbor;
@@ -119,7 +120,7 @@ TEST(CborEncodeTest, map_one_entry) {
 // --- Decoder tests ---
 
 TEST(CborDecodeTest, uint) {
-    Bytes data = {0x18, 0x64}; // 100
+    Bytes data = {0x18, 0x64};  // 100
     Decoder dec(data);
     auto v = dec.getUint();
     ASSERT_TRUE(v.has_value());
@@ -128,7 +129,7 @@ TEST(CborDecodeTest, uint) {
 }
 
 TEST(CborDecodeTest, negInt) {
-    Bytes data = {0x20}; // -1
+    Bytes data = {0x20};  // -1
     Decoder dec(data);
     auto v = dec.getInt();
     ASSERT_TRUE(v.has_value());
@@ -144,7 +145,7 @@ TEST(CborDecodeTest, bytes) {
 }
 
 TEST(CborDecodeTest, text) {
-    Bytes data = {0x65, 0x61, 0x6C, 0x69, 0x72, 0x6F}; // "aliro"
+    Bytes data = {0x65, 0x61, 0x6C, 0x69, 0x72, 0x6F};  // "aliro"
     Decoder dec(data);
     auto v = dec.getText();
     ASSERT_TRUE(v.has_value());
@@ -160,7 +161,7 @@ TEST(CborDecodeTest, boolTrue) {
 }
 
 TEST(CborDecodeTest, mapSize) {
-    Bytes data = {0xA2, 0x01, 0x02, 0x03, 0x04}; // {1:2, 3:4}
+    Bytes data = {0xA2, 0x01, 0x02, 0x03, 0x04};  // {1:2, 3:4}
     Decoder dec(data);
     auto count = dec.getMapSize();
     ASSERT_TRUE(count.has_value());
@@ -168,9 +169,9 @@ TEST(CborDecodeTest, mapSize) {
 }
 
 TEST(CborDecodeTest, wrongType_returnsError) {
-    Bytes data = {0x61, 0x61}; // text "a"
+    Bytes data = {0x61, 0x61};  // text "a"
     Decoder dec(data);
-    auto v = dec.getUint(); // wrong type
+    auto v = dec.getUint();  // wrong type
     EXPECT_FALSE(v.has_value());
     EXPECT_EQ(v.error(), AliroError::DECODING_ERROR);
 }
@@ -178,9 +179,12 @@ TEST(CborDecodeTest, wrongType_returnsError) {
 TEST(CborRoundTripTest, mapWithMixedValues) {
     Encoder enc;
     enc.beginMap(3);
-    enc.addUint(1);  enc.addUint(42);
-    enc.addUint(2);  enc.addText("aliro");
-    enc.addUint(3);  enc.addBytes(Bytes{0xAA, 0xBB});
+    enc.addUint(1);
+    enc.addUint(42);
+    enc.addUint(2);
+    enc.addText("aliro");
+    enc.addUint(3);
+    enc.addBytes(Bytes{0xAA, 0xBB});
     Bytes encoded = enc.finish();
 
     Decoder dec(encoded);

@@ -1,6 +1,7 @@
-#include "aliro/crypto/secureChannel.h"
-#include "aliro/crypto/openSslCryptoProvider.h"
 #include <gtest/gtest.h>
+
+#include "aliro/crypto/openSslCryptoProvider.h"
+#include "aliro/crypto/secureChannel.h"
 
 using namespace aliro;
 
@@ -52,7 +53,7 @@ TEST_F(SecureChannelTest, aad_encryptDecryptRoundTrip) {
     SecureChannel receiver(mCrypto, mKey);
 
     Bytes plaintext = {0xDE, 0xAD, 0xBE, 0xEF};
-    Bytes aad       = {0x00, 0x01, 0x02};
+    Bytes aad = {0x00, 0x01, 0x02};
 
     auto ct = sender.encrypt(plaintext, aad);
     ASSERT_TRUE(ct.has_value());

@@ -1,12 +1,11 @@
-#include "aliro/transport/simTransport.h"
 #include <gtest/gtest.h>
+
+#include "aliro/transport/simTransport.h"
 
 using namespace aliro;
 
 TEST(SimTransportTest, transceive_callsHandler_echoResponse) {
-    SimTransport t([](ByteView cmd) -> Result<Bytes> {
-        return Bytes(cmd.begin(), cmd.end());
-    });
+    SimTransport t([](ByteView cmd) -> Result<Bytes> { return Bytes(cmd.begin(), cmd.end()); });
     Bytes cmd = {0x01, 0x02, 0x03};
     auto resp = t.transceive(cmd);
     ASSERT_TRUE(resp.has_value());
@@ -33,9 +32,8 @@ TEST(SimTransportTest, transceive_afterClose_returnsTransportError) {
 }
 
 TEST(SimTransportTest, handler_errorPropagatesThrough) {
-    SimTransport t([](ByteView) -> Result<Bytes> {
-        return tl::unexpected(AliroError::INVALID_MESSAGE);
-    });
+    SimTransport t(
+        [](ByteView) -> Result<Bytes> { return tl::unexpected(AliroError::INVALID_MESSAGE); });
     auto resp = t.transceive(Bytes{0x01});
     ASSERT_FALSE(resp.has_value());
     EXPECT_EQ(resp.error(), AliroError::INVALID_MESSAGE);

@@ -1,7 +1,8 @@
+#include <gtest/gtest.h>
+
+#include "aliro/core/protocol.h"
 #include "aliro/crypto/mbedTlsCryptoProvider.h"
 #include "aliro/crypto/openSslCryptoProvider.h"
-#include "aliro/core/protocol.h"
-#include <gtest/gtest.h>
 
 using namespace aliro;
 
@@ -59,7 +60,7 @@ TEST_F(MbedTlsCryptoTest, verify_validSignatureReturnsTrue) {
 TEST_F(MbedTlsCryptoTest, verify_wrongMessageReturnsFalse) {
     auto kp = mCrypto.generateKeyPair();
     ASSERT_TRUE(kp.has_value());
-    Bytes msg   = {0xDE, 0xAD, 0xBE, 0xEF};
+    Bytes msg = {0xDE, 0xAD, 0xBE, 0xEF};
     Bytes other = {0xCA, 0xFE, 0xBA, 0xBE};
     auto sig = mCrypto.sign(msg, kp->priv);
     ASSERT_TRUE(sig.has_value());
@@ -102,7 +103,7 @@ TEST_F(MbedTlsCryptoTest, ecdhCompute_producesNonZeroSecret) {
     auto secret = mCrypto.ecdhCompute(kpA->priv, kpB->pub);
     ASSERT_TRUE(secret.has_value());
     EXPECT_EQ(secret->size(), 32u);
-    EXPECT_FALSE(std::all_of(secret->begin(), secret->end(), [](uint8_t b){ return b == 0; }));
+    EXPECT_FALSE(std::all_of(secret->begin(), secret->end(), [](uint8_t b) { return b == 0; }));
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +129,7 @@ TEST_F(MbedTlsCryptoTest, aesGcm_emptyPlaintext_roundTrip) {
 
     auto ct = mCrypto.aesGcmEncrypt({}, key, nonce, {});
     ASSERT_TRUE(ct.has_value());
-    EXPECT_EQ(ct->size(), 16u); // only tag
+    EXPECT_EQ(ct->size(), 16u);  // only tag
 
     auto pt = mCrypto.aesGcmDecrypt(*ct, key, nonce, {});
     ASSERT_TRUE(pt.has_value());
@@ -139,7 +140,7 @@ TEST_F(MbedTlsCryptoTest, aesGcm_withAad_roundTrip) {
     SessionKey key{Bytes(16, 0xCC)};
     Bytes nonce(12, 0x02);
     Bytes plaintext = {0xDE, 0xAD};
-    Bytes aad       = {0xFF, 0xFE};
+    Bytes aad = {0xFF, 0xFE};
 
     auto ct = mCrypto.aesGcmEncrypt(plaintext, key, nonce, aad);
     ASSERT_TRUE(ct.has_value());
@@ -156,7 +157,7 @@ TEST_F(MbedTlsCryptoTest, aesGcm_corruptedCiphertext_returnsError) {
 
     auto ct = mCrypto.aesGcmEncrypt(plaintext, key, nonce, {});
     ASSERT_TRUE(ct.has_value());
-    ct->front() ^= 0xFF; // corrupt
+    ct->front() ^= 0xFF;  // corrupt
 
     auto pt = mCrypto.aesGcmDecrypt(*ct, key, nonce, {});
     EXPECT_FALSE(pt.has_value());
@@ -180,7 +181,7 @@ TEST_F(MbedTlsCryptoTest, aesGcm_aadMismatch_returnsError) {
 // HKDF
 // ---------------------------------------------------------------------------
 TEST_F(MbedTlsCryptoTest, hkdfDerive_producesCorrectLength) {
-    Bytes ikm  = {0x01, 0x02, 0x03};
+    Bytes ikm = {0x01, 0x02, 0x03};
     Bytes salt = {0x04, 0x05};
     Bytes info = {0x06};
 
@@ -190,7 +191,7 @@ TEST_F(MbedTlsCryptoTest, hkdfDerive_producesCorrectLength) {
 }
 
 TEST_F(MbedTlsCryptoTest, hkdfDerive_differentInputs_differentOutputs) {
-    Bytes ikm  = {0x01, 0x02};
+    Bytes ikm = {0x01, 0x02};
     Bytes salt = {0x03};
     Bytes info = {0x04};
 
@@ -224,7 +225,7 @@ TEST(MbedTlsInteropTest, opensslSign_mbedtlsVerify) {
     OpenSslCryptoProvider openssl;
     MbedTlsCryptoProvider mbedtls;
 
-    auto kp  = openssl.generateKeyPair();
+    auto kp = openssl.generateKeyPair();
     ASSERT_TRUE(kp.has_value());
 
     Bytes msg = {0xCA, 0xFE, 0xBA, 0xBE};

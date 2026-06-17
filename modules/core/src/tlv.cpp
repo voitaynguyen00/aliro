@@ -44,30 +44,35 @@ Result<TlvItem> decodeOne(ByteView data, size_t& bytesConsumed) {
 
     uint8_t first = data[pos++];
     if ((first & 0x1F) == 0x1F) {
-        if (pos >= data.size()) return tl::unexpected(AliroError::DECODING_ERROR);
+        if (pos >= data.size())
+            return tl::unexpected(AliroError::DECODING_ERROR);
         item.tag = (static_cast<uint32_t>(first) << 8) | data[pos++];
     } else {
         item.tag = first;
     }
 
-    if (pos >= data.size()) return tl::unexpected(AliroError::DECODING_ERROR);
+    if (pos >= data.size())
+        return tl::unexpected(AliroError::DECODING_ERROR);
 
     size_t length = 0;
     uint8_t lenByte = data[pos++];
     if (lenByte <= 127) {
         length = lenByte;
     } else if (lenByte == 0x81) {
-        if (pos >= data.size()) return tl::unexpected(AliroError::DECODING_ERROR);
+        if (pos >= data.size())
+            return tl::unexpected(AliroError::DECODING_ERROR);
         length = data[pos++];
     } else if (lenByte == 0x82) {
-        if (pos + 2 > data.size()) return tl::unexpected(AliroError::DECODING_ERROR);
+        if (pos + 2 > data.size())
+            return tl::unexpected(AliroError::DECODING_ERROR);
         length = (static_cast<size_t>(data[pos]) << 8) | data[pos + 1];
         pos += 2;
     } else {
         return tl::unexpected(AliroError::DECODING_ERROR);
     }
 
-    if (pos + length > data.size()) return tl::unexpected(AliroError::DECODING_ERROR);
+    if (pos + length > data.size())
+        return tl::unexpected(AliroError::DECODING_ERROR);
 
     item.value.assign(data.data() + pos, data.data() + pos + length);
     bytesConsumed = pos + length;
@@ -80,11 +85,12 @@ Result<std::vector<TlvItem>> decodeAll(ByteView data) {
     while (offset < data.size()) {
         size_t consumed = 0;
         auto item = decodeOne(ByteView(data.data() + offset, data.size() - offset), consumed);
-        if (!item) return tl::unexpected(item.error());
+        if (!item)
+            return tl::unexpected(item.error());
         items.push_back(std::move(*item));
         offset += consumed;
     }
     return items;
 }
 
-} // namespace aliro::tlv
+}  // namespace aliro::tlv

@@ -10,7 +10,7 @@ namespace aliro {
 /// Result of a successful Aliro authentication.
 struct AuthResult {
     AccessDocument accessDoc;
-    Bytes          sessionKey; ///< Derived AES-128 session key.
+    Bytes sessionKey;  ///< Derived AES-128 session key.
 };
 
 /// Executes the two-step Aliro reader authentication flow over an ITransport.
@@ -26,14 +26,15 @@ public:
     ReaderSession(ICryptoProvider& crypto, ITransport& transport);
 
     /// Run the SELECT → AUTH0 → AUTH1 exchange.
-    /// @param readerKp      Reader's long-term key pair (pub sent in AUTH0; priv signs AUTH1 transcript).
-    /// @param devicePubKey  Expected device long-term public key (for AUTH0 signature verification).
-    Result<AuthResult> authenticate(const EcKeyPair&   readerKp,
-                                    const EcPublicKey& devicePubKey);
+    /// @param readerKp      Reader's long-term key pair (pub sent in AUTH0; priv signs AUTH1
+    /// transcript).
+    /// @param devicePubKey  Expected device long-term public key (for AUTH0 signature
+    /// verification).
+    Result<AuthResult> authenticate(const EcKeyPair& readerKp, const EcPublicKey& devicePubKey);
 
 private:
     ICryptoProvider& mCrypto;
-    ITransport&      mTransport;
+    ITransport& mTransport;
 };
 
-} // namespace aliro
+}  // namespace aliro
