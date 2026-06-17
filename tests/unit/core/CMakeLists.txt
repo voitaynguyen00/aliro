@@ -1,4 +1,5 @@
 add_executable(aliro-core-tests
+    apduTest.cpp
     tlvTest.cpp
     cborTest.cpp
     issuerAuthTest.cpp

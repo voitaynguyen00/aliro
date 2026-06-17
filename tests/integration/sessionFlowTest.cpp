@@ -107,3 +107,69 @@ TEST_F(SessionFlowTest, sessionKeySymmetry_readerAndDeviceAgree) {
     EXPECT_EQ(result->sessionKey, deviceSession->sessionKey());
     EXPECT_EQ(result->sessionKey.size(), 16u);
 }
+
+TEST_F(SessionFlowTest, transportError_duringAuth0_propagates) {
+    auto readerKp = mCrypto.generateKeyPair();
+    ASSERT_TRUE(readerKp.has_value());
+
+    // Transport always returns TRANSPORT_ERROR
+    SimTransport transport([](ByteView) -> Result<Bytes> {
+        return tl::unexpected(AliroError::TRANSPORT_ERROR);
+    });
+
+    auto deviceKp = mCrypto.generateKeyPair();
+    ASSERT_TRUE(deviceKp.has_value());
+
+    ReaderSession reader(mCrypto, transport);
+    auto result = reader.authenticate(readerKp->priv, deviceKp->pub);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), AliroError::TRANSPORT_ERROR);
+}
+
+TEST_F(SessionFlowTest, malformedAuth0Response_returnsError) {
+    auto readerKp = mCrypto.generateKeyPair();
+    auto deviceKp = mCrypto.generateKeyPair();
+    ASSERT_TRUE(readerKp.has_value() && deviceKp.has_value());
+
+    // AUTH0 returns garbage with valid SW
+    SimTransport transport([](ByteView cmd) -> Result<Bytes> {
+        if (cmd.size() >= 2 && cmd[1] == protocol::kInsAuth0) {
+            // Garbage TLV data + SW 0x9000
+            return Bytes{0xFF, 0xFE, 0xFD, 0x90, 0x00};
+        }
+        return tl::unexpected(AliroError::INVALID_MESSAGE);
+    });
+
+    ReaderSession reader(mCrypto, transport);
+    auto result = reader.authenticate(readerKp->priv, deviceKp->pub);
+
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(SessionFlowTest, consecutiveSessions_independentKeys) {
+    auto readerKp = mCrypto.generateKeyPair();
+    auto deviceKp = mCrypto.generateKeyPair();
+    ASSERT_TRUE(readerKp.has_value() && deviceKp.has_value());
+
+    auto run = [&]() -> Bytes {
+        auto deviceSession = std::make_shared<DeviceSession>(
+            mCrypto, deviceKp->priv, makeTestAccessDoc());
+        SimTransport transport([&deviceSession](ByteView cmd) -> Result<Bytes> {
+            uint8_t ins = cmd.size() >= 2 ? cmd[1] : 0;
+            if (ins == protocol::kInsAuth0) return deviceSession->handleAuth0(cmd);
+            if (ins == protocol::kInsAuth1) return deviceSession->handleAuth1(cmd);
+            return tl::unexpected(AliroError::INVALID_MESSAGE);
+        });
+        ReaderSession reader(mCrypto, transport);
+        auto r = reader.authenticate(readerKp->priv, deviceKp->pub);
+        EXPECT_TRUE(r.has_value());
+        return r.has_value() ? r->sessionKey : Bytes{};
+    };
+
+    auto key1 = run();
+    auto key2 = run();
+    EXPECT_NE(key1, key2); // Each session uses fresh ephemeral keys → different session key
+    EXPECT_EQ(key1.size(), 16u);
+    EXPECT_EQ(key2.size(), 16u);
+}

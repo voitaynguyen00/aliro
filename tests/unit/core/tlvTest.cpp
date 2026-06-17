@@ -87,6 +87,33 @@ TEST(TlvRoundTripTest, encodeDecodeRoundTrip) {
     EXPECT_EQ(consumed, encoded->size());
 }
 
+// Regression: tags 0x80–0xFF with (& 0x1F != 0x1F) must be single-byte.
+TEST(TlvRoundTripTest, aliroProtocolTags_roundTrip) {
+    const uint32_t tags[] = {
+        0x86, // kTagEphemeralPublicKey
+        0x85, // kTagReaderNonce
+        0x8A, // kTagDeviceNonce
+        0x9E, // kTagSignature
+        0x9D, // kTagCryptogram
+        0x83, // kTagReaderIdentifier
+        0xA7, // kTagDeviceRequest
+        0xA8, // kTagDeviceResponse
+    };
+    for (uint32_t tag : tags) {
+        Bytes value = {0xDE, 0xAD};
+        auto encoded = tlv::encode(tag, value);
+        ASSERT_TRUE(encoded.has_value()) << "encode failed for tag 0x" << std::hex << tag;
+        EXPECT_EQ(encoded->at(0), static_cast<uint8_t>(tag))
+            << "tag 0x" << std::hex << tag << " must encode as single byte";
+
+        size_t consumed = 0;
+        auto decoded = tlv::decodeOne(*encoded, consumed);
+        ASSERT_TRUE(decoded.has_value()) << "decode failed for tag 0x" << std::hex << tag;
+        EXPECT_EQ(decoded->tag, tag) << "tag mismatch for 0x" << std::hex << tag;
+        EXPECT_EQ(decoded->value, value);
+    }
+}
+
 TEST(TlvDecodeAllTest, multipleConcatenatedItems) {
     auto item1 = tlv::encode(0x01, Bytes{0xAA});
     auto item2 = tlv::encode(0x02, Bytes{0xBB, 0xCC});
