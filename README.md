@@ -1,113 +1,116 @@
-# Aliro
+<div align="center">
 
-> A C++20 implementation of the **Aliro 1.0** physical access control protocol  
-> (CSA document 26-42802-001)
+# 🔐 Aliro
 
-Aliro defines a cryptographically authenticated NFC/BLE/UWB exchange between a **Reader** (door lock, turnstile, gate) and a **User Device** (phone, wearable, key fob). This library implements both roles in portable C++20 with pluggable cryptography — runs on desktop and embedded targets alike.
+### C++20 implementation of the Aliro 1.0 physical access control protocol
+
+*The open standard that lets your phone unlock doors over NFC · BLE · UWB*
+
+[![Build](https://github.com/voitaynguyen00/aliro/actions/workflows/build.yml/badge.svg)](https://github.com/voitaynguyen00/aliro/actions)
+[![Tests](https://img.shields.io/badge/tests-140%20passing-brightgreen)](#test)
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Vibe coded](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-blueviolet?logo=anthropic)](https://claude.ai/code)
+
+</div>
 
 ---
 
-## Table of Contents
+> **⚡ TL;DR** — Drop-in C++20 library that does the full Aliro handshake (SELECT → AUTH0 → AUTH1) for both the reader and the device side. Pluggable crypto (OpenSSL 3.x or MbedTLS 3.x), runs on embedded, no exceptions, no RTTI, 140 tests. Vibe coded from scratch with [Claude Code](https://claude.ai/code).
 
-- [What is Aliro?](#what-is-aliro)
-- [Features](#features)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Clone](#clone)
-  - [Build](#build)
-  - [Test](#test)
-- [Usage](#usage)
-  - [Reader side](#reader-side)
-  - [Device side](#device-side)
-  - [Crypto provider](#crypto-provider)
-  - [Secure channel](#secure-channel)
-  - [Logging](#logging)
-- [Architecture](#architecture)
-- [Donate](#donate)
+---
+
+## 🤖 The origin story
+
+This entire library was built through **AI-assisted vibe coding** using [Claude Code](https://claude.ai/code) by Anthropic.
+
+Every module, every test, every CMake file — designed and written in a collaborative back-and-forth with an AI. No copy-pasting from Stack Overflow. No half-remembered blog posts. Just a spec PDF, a blank repo, and a conversation.
+
+The result: a clean, well-tested C++20 library in the time it would normally take to just understand the spec.
+
+> If you're curious what AI-assisted systems programming looks like in practice, this repo is a live example. Star it and find out 👇
 
 ---
 
 ## What is Aliro?
 
-Aliro is an open access-control standard from the Connectivity Standards Alliance. A transaction looks like this:
+Aliro is a physical access control standard from the [Connectivity Standards Alliance](https://csa-iot.org/). Think: your phone unlocking a hotel room, an office turnstile, or a car door — without touching anything — using cryptographically authenticated NFC or BLE.
 
 ```
-Phone (Device)                          Door Lock (Reader)
-      │                                        │
-      │◄──────────── SELECT AID ───────────────│
-      │                                        │
-      │◄──────────── AUTH0 ────────────────────│  reader ephemeral key + nonce + identity
-      │                                        │
-      │──────────── AUTH0 response ───────────►│  device ephemeral key + nonce + signature
-      │                                        │     (ECDH → session key derived here)
-      │◄──────────── AUTH1 ────────────────────│  reader transcript signature
-      │                                        │
-      │──────────── AccessDocument ───────────►│  door opens 🎉
+Phone (User Device)                     Door Lock (Reader)
+       │                                       │
+       │◄──────────── SELECT AID ──────────────│
+       │                                       │
+       │◄──────────── AUTH0 ───────────────────│  ephemeral key + nonce + reader identity
+       │                                       │
+       │────────── AUTH0 response ────────────►│  ephemeral key + nonce + device signature
+       │                                       │       ↑ ECDH → session key derived here
+       │◄──────────── AUTH1 ───────────────────│  reader transcript signature
+       │                                       │
+       │─────────── AccessDocument ───────────►│  🚪 door opens
 ```
 
-All crypto is P-256 ECDH + ECDSA / SHA-256, HKDF-SHA-256 for key derivation, and AES-128-GCM for the post-auth secure channel.
+Under the hood: **P-256 ECDH** key agreement → **HKDF-SHA-256** session key derivation → **ECDSA/SHA-256** mutual authentication → **AES-128-GCM** secure channel. All in one 3-message exchange.
 
 ---
 
-## Features
+## ✨ Features
 
-- **Full protocol** — SELECT AID → AUTH0 → AUTH1 state machines for both reader and device roles
-- **Pluggable crypto** — swap between OpenSSL 3.x and MbedTLS 3.x at runtime; bring your own provider for custom hardware
-- **Embedded-ready** — MbedTLS provider requires no exceptions, no RTTI; suitable for bare-metal targets
-- **Secure channel** — counter-based AES-128-GCM with independent send/receive counters after authentication
-- **Structured logging** — callback-based `ALIRO_LOG_{DEBUG,INFO,WARN,ERROR}` macros; define `ALIRO_LOG_DISABLE` for zero overhead
-- **Self-contained** — MbedTLS 3.6.2 and OpenSSL 3.3.1 vendored as git submodules; no system installs required
-- **140 tests** — unit tests for every module, integration tests for the full exchange, cross-provider interop tests
+| | |
+|---|---|
+| 🔄 **Both roles** | Reader (initiator) and Device (responder) state machines |
+| 🔌 **Pluggable crypto** | OpenSSL 3.x or MbedTLS 3.x — swap at compile time, or bring your own HSM driver |
+| 📦 **Embedded-ready** | MbedTLS provider: no exceptions, no RTTI, no dynamic linking required |
+| 🔒 **Secure channel** | Counter-based AES-128-GCM with independent send/receive counters |
+| 📝 **Structured logging** | Callback-based `ALIRO_LOG_*` macros — zero overhead with `ALIRO_LOG_DISABLE` |
+| 📎 **Self-contained** | MbedTLS 3.6.2 + OpenSSL 3.3.1 vendored as git submodules |
+| ✅ **140 tests** | Unit, integration, and cross-provider interop tests |
+| 🚫 **No exceptions** | All APIs return `Result<T>` (`tl::expected<T, AliroError>`) |
 
 ---
 
-## Project structure
+## 📁 Project structure
 
 ```
 aliro/
 ├── modules/
-│   ├── core/        — CBOR/TLV codecs, APDU framing, protocol constants, logging
-│   ├── crypto/      — ICryptoProvider interface, OpenSSL & MbedTLS implementations, SecureChannel
-│   ├── transport/   — ITransport interface, SimTransport for testing
-│   ├── reader/      — ReaderSession (initiator role)
-│   └── device/      — DeviceSession (responder role)
+│   ├── core/        — CBOR · TLV · APDU · AccessDocument · logging
+│   ├── crypto/      — ICryptoProvider · OpenSSL · MbedTLS · SecureChannel
+│   ├── transport/   — ITransport · SimTransport (for tests)
+│   ├── reader/      — ReaderSession  (SELECT → AUTH0 → AUTH1 initiator)
+│   └── device/      — DeviceSession  (SELECT → AUTH0 → AUTH1 responder)
 ├── tests/
 │   ├── unit/        — per-module unit tests
-│   └── integration/ — full SELECT→AUTH0→AUTH1 end-to-end tests
-├── third_party/
-│   ├── mbedtls/     — Mbed-TLS/mbedtls @ v3.6.2  (git submodule)
-│   └── openssl/     — openssl/openssl   @ openssl-3.3.1  (git submodule)
-└── cmake/           — AliroOptions, AliroVersion helpers
+│   └── integration/ — full end-to-end exchange tests
+└── third_party/
+    ├── mbedtls/     — Mbed-TLS/mbedtls @ v3.6.2       (git submodule)
+    └── openssl/     — openssl/openssl   @ openssl-3.3.1 (git submodule)
 ```
 
 ---
 
-## Getting started
+## 🚀 Getting started
 
 ### Prerequisites
 
-| Tool | Minimum version | Notes |
-|---|---|---|
-| CMake | 3.20 | |
-| Ninja | any | |
-| C++ compiler | C++20 | Clang 15+, GCC 12+, MSVC 19.34+ |
-| Git | 2.10+ | for submodule shallow clone support |
-| Perl | any | only needed if building the OpenSSL submodule on a system without OpenSSL installed |
+| Tool | Min version |
+|---|---|
+| CMake | 3.20 |
+| Ninja | any |
+| C++ compiler | C++20 (Clang 15+, GCC 12+, MSVC 19.34+) |
+| Git | 2.10+ |
 
-**macOS** (Homebrew — recommended):
-
+**macOS** (Homebrew):
 ```bash
 brew install cmake ninja openssl@3
 ```
 
 **Ubuntu / Debian**:
-
 ```bash
-sudo apt-get install cmake ninja-build libssl-dev perl
+sudo apt-get install cmake ninja-build libssl-dev
 ```
 
-**Bare / embedded**: only MbedTLS is needed. OpenSSL is not required.
+**Bare / embedded**: only MbedTLS is needed — OpenSSL is entirely optional.
 
 ### Clone
 
@@ -115,23 +118,18 @@ sudo apt-get install cmake ninja-build libssl-dev perl
 git clone https://github.com/voitaynguyen00/aliro.git
 cd aliro
 
-# Pull vendored libraries
+# Pull vendored crypto libraries
 git submodule update --init
 
-# MbedTLS 3.6.x requires its own nested 'framework' submodule
+# MbedTLS 3.6.x needs its own nested framework submodule
 git -C third_party/mbedtls submodule update --init
 ```
 
 ### Build
 
 ```bash
-# Debug build (includes tests)
 cmake --preset debug
 cmake --build --preset debug
-
-# Optimised release build
-cmake --preset release
-cmake --build --preset release
 ```
 
 ### Test
@@ -140,8 +138,6 @@ cmake --build --preset release
 ctest --preset debug
 ```
 
-Expected output:
-
 ```
 100% tests passed, 0 tests failed out of 140
 Total Test time (real) =   0.92 sec
@@ -149,192 +145,204 @@ Total Test time (real) =   0.92 sec
 
 ---
 
-## Usage
+## 📖 Usage
 
 ### Reader side
 
 ```cpp
-#include "aliro/crypto/openSslCryptoProvider.h"   // or mbedTlsCryptoProvider.h
+#include "aliro/crypto/openSslCryptoProvider.h"
 #include "aliro/reader/readerSession.h"
 
 using namespace aliro;
 
-// ITransport has one method: Result<Bytes> transceive(ByteView command)
-MyNfcTransport transport;
 OpenSslCryptoProvider crypto;
+MyNfcTransport        transport;          // your ITransport implementation
 
-// Long-term key pair provisioned to this reader
-EcKeyPair    readerKp       = loadReaderKeyPair();
-// Public key of the device expected to authenticate
-EcPublicKey  devicePubKey   = loadTrustedDeviceKey();
+EcKeyPair   readerKp     = loadReaderKeyPair();
+EcPublicKey devicePubKey = loadTrustedDeviceKey();
 
 ReaderSession session(crypto, transport);
 auto result = session.authenticate(readerKp, devicePubKey);
 
 if (result) {
-    const AccessDocument& doc       = result->accessDoc;
-    const Bytes&          sessionKey = result->sessionKey; // AES-128, use with SecureChannel
+    // Authentication succeeded — result->sessionKey is the AES-128 channel key
     unlockDoor();
 } else {
-    // result.error() is an AliroError enum value — no exceptions thrown
-    handleError(result.error());
+    handleError(result.error());   // AliroError enum, no exceptions
 }
 ```
 
 ### Device side
 
 ```cpp
-#include "aliro/crypto/mbedTlsCryptoProvider.h"
+#include "aliro/crypto/mbedTlsCryptoProvider.h"   // <-- embedded-friendly
 #include "aliro/device/deviceSession.h"
 
 using namespace aliro;
 
 MbedTlsCryptoProvider crypto;
-EcPrivateKey          devicePrivKey = loadDevicePrivateKey();
-AccessDocument        accessDoc     = buildAccessDocument();
-
-DeviceSession session(crypto, devicePrivKey, accessDoc);
+DeviceSession session(crypto, loadDevicePrivKey(), buildAccessDocument());
 
 // Route incoming APDUs from your NFC stack
-void onApduReceived(uint8_t ins, ByteView data) {
-    Result<Bytes> response;
+void onApdu(uint8_t ins, ByteView data) {
+    Result<Bytes> resp;
     switch (ins) {
-        case 0xA4: response = session.handleSelect(data); break;
-        case 0x50: response = session.handleAuth0(data);  break;
-        case 0x51: response = session.handleAuth1(data);  break;
-        default:   response = tl::unexpected(AliroError::INVALID_MESSAGE);
+        case 0xA4: resp = session.handleSelect(data); break;
+        case 0x50: resp = session.handleAuth0(data);  break;
+        case 0x51: resp = session.handleAuth1(data);  break;
+        default:   resp = tl::unexpected(AliroError::INVALID_MESSAGE);
     }
-
-    if (response) sendApduResponse(*response);
-    else          sendStatusWord(0x6F00);
+    resp ? sendApdu(*resp) : sendSw(0x6F00);
 }
 ```
 
-### Crypto provider
-
-Two built-in providers implement `ICryptoProvider` identically — swap at will:
+### Pluggable crypto
 
 ```cpp
-// Desktop / server
-#include "aliro/crypto/openSslCryptoProvider.h"
-OpenSslCryptoProvider crypto;   // links OpenSSL 3.x
+// Option A — desktop/server, links OpenSSL 3.x
+OpenSslCryptoProvider crypto;
 
-// Embedded / no-OS
-#include "aliro/crypto/mbedTlsCryptoProvider.h"
-MbedTlsCryptoProvider crypto;   // links MbedTLS 3.x
+// Option B — embedded/bare-metal, links MbedTLS 3.x
+MbedTlsCryptoProvider crypto;
 
-// Custom hardware security module
-class MyHsmProvider : public aliro::ICryptoProvider { /* implement 8 methods */ };
+// Option C — custom hardware (HSM, SE, TPM)
+class MyHsmProvider : public aliro::ICryptoProvider {
+    Result<EcKeyPair> generateKeyPair() override { /* call your HSM */ }
+    // ...7 more methods
+};
 ```
 
-The full `ICryptoProvider` interface:
-
-```cpp
-Result<EcKeyPair> generateKeyPair();
-Result<Bytes>     ecdhCompute(const EcPrivateKey&, const EcPublicKey&);
-Result<Signature> sign(ByteView data, const EcPrivateKey&);
-Result<bool>      verify(ByteView data, const Signature&, const EcPublicKey&);
-Result<Bytes>     aesGcmEncrypt(ByteView plaintext, const SessionKey&, ByteView nonce, ByteView aad);
-Result<Bytes>     aesGcmDecrypt(ByteView ciphertext, const SessionKey&, ByteView nonce, ByteView aad);
-Result<Bytes>     hkdfDerive(ByteView ikm, ByteView salt, ByteView info, size_t len);
-Result<Bytes>     randomBytes(size_t n);
-```
+Both built-in providers are interoperable — you can sign with OpenSSL and verify with MbedTLS (tested).
 
 ### Secure channel
-
-After a successful exchange both sides hold the same 16-byte AES-128 session key. `SecureChannel` wraps it with counter-based AES-128-GCM so nonces are never reused:
 
 ```cpp
 #include "aliro/crypto/secureChannel.h"
 
-SecureChannel readerChannel(crypto, result->sessionKey);
-SecureChannel deviceChannel(crypto, session.sessionKey());
+// Both sides use the session key produced by authenticate() / session.sessionKey()
+SecureChannel reader(crypto, result->sessionKey);
+SecureChannel device(crypto, session.sessionKey());
 
-// Reader encrypts a message
-auto ciphertext = readerChannel.encrypt(plaintext);
-
-// Device decrypts it — send/receive counters track independently
-auto plaintext = deviceChannel.decrypt(*ciphertext);
+auto ct = reader.encrypt(message);    // AES-128-GCM, auto-increments nonce counter
+auto pt = device.decrypt(*ct);        // counters tracked independently per direction
 ```
 
 ### Logging
 
-Install a callback once at startup and all `ALIRO_LOG_*` calls route through it:
-
 ```cpp
 #include "aliro/core/log.h"
 
-aliro::log::setCallback(
-    [](aliro::log::Level level, const char* file, int line, const char* msg) {
-        printf("[%s] %s:%d  %s\n", levelName(level), file, line, msg);
-    },
-    aliro::log::Level::INFO  // filter out DEBUG messages in production
-);
+aliro::log::setCallback([](aliro::log::Level lv, const char* file, int line, const char* msg) {
+    printf("[%s] %s:%d  %s\n", levelName(lv), file, line, msg);
+}, aliro::log::Level::INFO);
 
-// Disable at runtime
+// Silence at runtime
 aliro::log::setCallback(nullptr);
+
+// Silence at compile time (truly zero overhead)
+#define ALIRO_LOG_DISABLE
 ```
 
-Log levels: `DEBUG` < `INFO` < `WARN` < `ERROR` < `NONE`
-
-Compile-time zero overhead: define `ALIRO_LOG_DISABLE` before including `log.h` and all macros expand to nothing.
+Levels: `DEBUG` · `INFO` · `WARN` · `ERROR` · `NONE`
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Application                      │
-└────────────┬────────────────────────┬───────────────┘
-             │                        │
-      ┌──────▼──────┐          ┌──────▼──────┐
-      │ ReaderSession│          │ DeviceSession│
-      └──────┬──────┘          └──────┬───────┘
-             │                        │
-      ┌──────▼────────────────────────▼──────┐
-      │               aliro-core             │
-      │   CBOR · TLV · APDU · AccessDocument │
-      │   IssuerAuth · Logging               │
-      └──────────────────┬───────────────────┘
-                         │
-             ┌───────────▼───────────┐
-             │      aliro-crypto     │
-             │   ICryptoProvider     │
-             │  ┌─────────────────┐  │
-             │  │  OpenSSL 3.x    │  │
-             │  │  MbedTLS 3.x    │  │
-             │  │  Custom HSM     │  │
-             │  └─────────────────┘  │
-             │   SecureChannel       │
-             └───────────┬───────────┘
-                         │
-             ┌───────────▼───────────┐
-             │    aliro-transport    │
-             │   ITransport          │
-             │  (NFC · BLE · UWB ·  │
-             │   Sim · your driver) │
-             └───────────────────────┘
+│                    Your Application                 │
+└────────────┬──────────────────────────┬─────────────┘
+             │                          │
+      ┌──────▼──────┐            ┌──────▼───────┐
+      │ ReaderSession│            │ DeviceSession │
+      └──────┬──────┘            └──────┬────────┘
+             │                          │
+      ┌──────▼──────────────────────────▼──────┐
+      │                aliro-core               │
+      │    CBOR · TLV · APDU · AccessDocument   │
+      │    IssuerAuth · Revocation · Logging     │
+      └─────────────────┬───────────────────────┘
+                        │
+            ┌───────────▼────────────┐
+            │      aliro-crypto      │
+            │   ┌────────────────┐   │
+            │   │  OpenSSL 3.x   │   │
+            │   │  MbedTLS 3.x   │   │
+            │   │  Your HSM/SE   │   │
+            │   └────────────────┘   │
+            │   SecureChannel        │
+            └───────────┬────────────┘
+                        │
+            ┌───────────▼────────────┐
+            │    aliro-transport     │
+            │   NFC · BLE · UWB ·   │
+            │   Sim · Your Driver   │
+            └────────────────────────┘
 ```
 
-All public APIs return `Result<T>` (`tl::expected<T, AliroError>`) — no exceptions are thrown anywhere in the library.
+All public APIs return `Result<T>` (`tl::expected<T, AliroError>`) — no exceptions anywhere.
 
 ---
 
-## Donate
+## 🤖 Built with Claude Code
 
-If this library saved you from hand-rolling P-256 ECDH at 2 AM, consider buying me a coffee ☕
+This project is a real-world example of **vibe coding a systems library with AI**.
 
-Every donation goes directly towards more caffeine, fewer bugs, and the occasional victory snack.
+The entire implementation — protocol state machines, crypto layer, CMake build system, 140 unit and integration tests — was written through conversation with [Claude Code](https://claude.ai/code). The workflow:
 
-| Method | |
-|---|---|
+1. Feed the Aliro spec PDF to Claude
+2. Describe what needs to be built next
+3. Review the output, push back, iterate
+4. Run tests, fix failures in dialogue
+5. Repeat until green
+
+No boilerplate generators. No copy-paste. The AI held the full architecture in context across multiple sessions and made real design decisions (error propagation strategy, transcript construction, nonce scheme, MbedTLS RAII wrappers).
+
+**What this shows:**
+- AI can implement a non-trivial cryptographic protocol from a spec document
+- The output is readable, idiomatic C++20 — not generated slop
+- TDD works well in the AI-assisted workflow (write the failing test → implement → green)
+- Embedded-friendly design choices (no exceptions, pluggable crypto) survive AI collaboration
+
+If you're building something similar, or just want to see how this workflow plays out at library scale — this is the repo to study.
+
+---
+
+## 💖 Donate
+
+If this library saved you from hand-rolling P-256 ECDH and BER-TLV parsing at 2 AM, consider buying me a coffee ☕
+
+All donations go directly toward more caffeine, fewer bugs, and the occasional victory snack after a clean `100% tests passed`.
+
+<div align="center">
+
+| Method | Where |
+|:---:|:---:|
 | ☕ Ko-fi | [ko-fi.com/voitaynguyen](https://ko-fi.com/voitaynguyen) |
 | ₿ Bitcoin | `bc1q_YOUR_BTC_ADDRESS` |
 | Ξ Ethereum | `0x_YOUR_ETH_ADDRESS` |
 
-> *"Open source is love. Donations are more love."*  — me, kekeke 🐸
+*"Open source is love. Donations are more love."*
+
+*kekeke 🐸*
+
+</div>
 
 ---
 
+## 📄 License
+
+MIT — do whatever you want, just don't blame me if the door doesn't open.
+
+---
+
+<div align="center">
+
+**If this project is useful or interesting, a ⭐ star goes a long way — it helps others find it.**
+
+Made with 🤖 + ☕ · Powered by [Claude Code](https://claude.ai/code)
+
 <sub>Aliro 1.0 specification © Connectivity Standards Alliance 2026. This project is an independent implementation and is not affiliated with or endorsed by CSA.</sub>
+
+</div>
