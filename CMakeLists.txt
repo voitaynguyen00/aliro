@@ -15,7 +15,10 @@ include(AliroOptions)
 include(AliroVersion)
 include(FetchContent)
 
-# OpenSSL — prefer Homebrew on macOS, fall back to FetchContent if not found
+# ---------------------------------------------------------------------------
+# OpenSSL — prefers system install (Homebrew on macOS, libssl-dev on Linux).
+# Falls back to the bundled submodule at third_party/openssl if unavailable.
+# ---------------------------------------------------------------------------
 if(APPLE AND NOT DEFINED OPENSSL_ROOT_DIR)
     find_program(BREW brew)
     if(BREW)
@@ -34,14 +37,11 @@ endif()
 find_package(OpenSSL 3.0 QUIET)
 
 if(NOT OPENSSL_FOUND)
-    message(STATUS "System OpenSSL not found — fetching via openssl-cmake")
-    FetchContent_Declare(
-        openssl_cmake
-        GIT_REPOSITORY https://github.com/janbar/openssl-cmake.git
-        GIT_TAG        3.3.1-20241124
-        GIT_SHALLOW    TRUE
-    )
-    FetchContent_MakeAvailable(openssl_cmake)
+    message(STATUS "System OpenSSL not found — building from submodule third_party/openssl")
+    # openssl/openssl CMake support (3.2+) invokes Perl's Configure script.
+    # Perl must be available on the build host.
+    set(OPENSSL_NO_TESTS ON CACHE BOOL "" FORCE)
+    add_subdirectory(third_party/openssl EXCLUDE_FROM_ALL)
     if(NOT TARGET OpenSSL::Crypto)
         add_library(OpenSSL::Crypto ALIAS crypto)
     endif()
@@ -50,19 +50,17 @@ if(NOT OPENSSL_FOUND)
     endif()
 endif()
 
-# MbedTLS — always fetched for embedded compatibility
+# ---------------------------------------------------------------------------
+# MbedTLS — always built from the bundled submodule at third_party/mbedtls.
+# ---------------------------------------------------------------------------
 set(ENABLE_TESTING         OFF CACHE BOOL "" FORCE)
 set(ENABLE_PROGRAMS        OFF CACHE BOOL "" FORCE)
 set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-    mbedtls
-    GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
-    GIT_TAG        v3.6.2
-    GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(mbedtls)
+add_subdirectory(third_party/mbedtls)
 
+# ---------------------------------------------------------------------------
 # tl::expected — Result<T,E> (std::expected backport)
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
     tl_expected
     GIT_REPOSITORY https://github.com/TartanLlama/expected.git
@@ -72,7 +70,9 @@ FetchContent_Declare(
 set(EXPECTED_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(tl_expected)
 
+# ---------------------------------------------------------------------------
 # GoogleTest
+# ---------------------------------------------------------------------------
 if(ALIRO_BUILD_TESTS)
     FetchContent_Declare(
         googletest
