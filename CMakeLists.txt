@@ -95,3 +95,7 @@ add_subdirectory(modules/device)
 if(ALIRO_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
+
+if(ALIRO_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
