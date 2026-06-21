@@ -7,7 +7,7 @@
 *The open standard that lets your phone unlock doors over NFC · BLE · UWB*
 
 [![Build](https://github.com/voitaynguyen00/aliro/actions/workflows/build.yml/badge.svg)](https://github.com/voitaynguyen00/aliro/actions)
-[![Tests](https://img.shields.io/badge/tests-140%20passing-brightgreen)](#test)
+[![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen)](#test)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Vibe coded](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-blueviolet?logo=anthropic)](https://claude.ai/code)
@@ -16,7 +16,7 @@
 
 ---
 
-> **⚡ TL;DR** — Drop-in C++20 library that does the full Aliro handshake (SELECT → AUTH0 → AUTH1) for both the reader and the device side. Pluggable crypto (OpenSSL 3.x or MbedTLS 3.x), runs on embedded, no exceptions, no RTTI, 140 tests. Vibe coded from scratch with [Claude Code](https://claude.ai/code).
+> **⚡ TL;DR** — Drop-in C++20 library that does the full Aliro handshake (SELECT → AUTH0 → AUTH1) for both the reader and the device side. Pluggable crypto (OpenSSL 3.x or MbedTLS 3.x), runs on embedded, no exceptions, no RTTI, 154 tests. Vibe coded from scratch with [Claude Code](https://claude.ai/code).
 
 ---
 
@@ -64,7 +64,9 @@ Under the hood: **P-256 ECDH** key agreement → **HKDF-SHA-256** session key de
 | 🔒 **Secure channel** | Counter-based AES-128-GCM with independent send/receive counters |
 | 📝 **Structured logging** | Callback-based `ALIRO_LOG_*` macros — zero overhead with `ALIRO_LOG_DISABLE` |
 | 📎 **Self-contained** | MbedTLS 3.6.2 + OpenSSL 3.3.1 vendored as git submodules |
-| ✅ **140 tests** | Unit, integration, and cross-provider interop tests |
+| ✅ **154 tests** | Unit, integration, and cross-provider interop tests |
+| 🔑 **Key serialization** | PEM and DER import/export for P-256 key pairs — interoperable with OpenSSL CLI |
+| 🎯 **Examples** | `reader_demo` and `device_demo` show end-to-end usage in ~50 lines each |
 | 🚫 **No exceptions** | All APIs return `Result<T>` (`tl::expected<T, AliroError>`) |
 
 ---
@@ -139,8 +141,8 @@ ctest --preset debug
 ```
 
 ```
-100% tests passed, 0 tests failed out of 140
-Total Test time (real) =   0.92 sec
+100% tests passed, 0 tests failed out of 154
+Total Test time (real) =   1.16 sec
 ```
 
 ---
@@ -289,7 +291,7 @@ All public APIs return `Result<T>` (`tl::expected<T, AliroError>`) — no except
 
 This project is a real-world example of **vibe coding a systems library with AI**.
 
-The entire implementation — protocol state machines, crypto layer, CMake build system, 140 unit and integration tests — was written through conversation with [Claude Code](https://claude.ai/code). The workflow:
+The entire implementation — protocol state machines, crypto layer, CMake build system, 154 unit and integration tests — was written through conversation with [Claude Code](https://claude.ai/code). The workflow:
 
 1. Feed the Aliro spec PDF to Claude
 2. Describe what needs to be built next
