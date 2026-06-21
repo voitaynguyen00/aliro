@@ -23,3 +23,7 @@ compile_commands.json
 *~
 .cache/
 vcpkg_installed/
+
+# Local development plan and design docs — not for GitHub
+PLAN.md
+docs/
