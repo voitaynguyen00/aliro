@@ -30,10 +30,10 @@ static std::string toHex(const Bytes& b) {
 static AccessDocument makeAccessDoc() {
     AccessDocument doc;
     doc.docType = std::string(protocol::kAliroDocType);
-    doc.issuerAuth.protectedHeader   = Bytes{0xA0};
+    doc.issuerAuth.protectedHeader = Bytes{0xA0};
     doc.issuerAuth.unprotectedHeader = Bytes{0xA0};
-    doc.issuerAuth.payload           = Bytes(8, 0x42);
-    doc.issuerAuth.signature         = Bytes(64, 0xAB);
+    doc.issuerAuth.payload = Bytes(8, 0x42);
+    doc.issuerAuth.signature = Bytes(64, 0xAB);
     return doc;
 }
 
@@ -59,9 +59,12 @@ int main() {
         if (cmd.size() < 2)
             return tl::unexpected(AliroError::INVALID_MESSAGE);
         uint8_t ins = cmd[1];
-        if (ins == protocol::kInsSelect) return device->handleSelect(cmd);
-        if (ins == protocol::kInsAuth0)  return device->handleAuth0(cmd);
-        if (ins == protocol::kInsAuth1)  return device->handleAuth1(cmd);
+        if (ins == protocol::kInsSelect)
+            return device->handleSelect(cmd);
+        if (ins == protocol::kInsAuth0)
+            return device->handleAuth0(cmd);
+        if (ins == protocol::kInsAuth1)
+            return device->handleAuth1(cmd);
         return tl::unexpected(AliroError::INVALID_MESSAGE);
     });
 
@@ -71,8 +74,8 @@ int main() {
     auto result = reader.authenticate(*readerKp, deviceKp->pub);
 
     if (!result) {
-        std::cerr << "[reader]  Authentication FAILED (error "
-                  << static_cast<int>(result.error()) << ")\n";
+        std::cerr << "[reader]  Authentication FAILED (error " << static_cast<int>(result.error())
+                  << ")\n";
         return 1;
     }
 
